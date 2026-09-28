@@ -41,6 +41,8 @@ ECDICT README 说明曾从不同资料汇集词条，仓库 LICENSE 为 MIT。�
 
 qwerty 的一些词表项含 name、usphone、ukphone、trans，格式适合借鉴，但一个词存在于某词书只说明**列表成员关系**，不能自动证明“官方 CET4 词”或覆盖全部考试范围。其 README 明示字典数据来自 kajweb、语音来自有道。直接复制音标、译文、词表或语音链接时需要追到相应原始授权；程序 GPL-3.0 不自动覆盖第三方数据。
 
+进一步核查 [qwerty 数据来源声明](https://github.com/RealKai42/qwerty-learner#%E6%95%B0%E6%8D%AE%E6%9D%A5%E6%BA%90) 与 [kajweb/dict](https://github.com/kajweb/dict)：后者自述从“X 道背单词(app)”抓取，并给出有道、新东方等词书的原始地址；检查其仓库根目录时未见数据再分发许可证。**公开 Git 仓库、项目代码 GPL-3.0、上游贡献者署名，均不能证明原词书权利人已许可二次打包。**有道当前[词典服务条款](https://c.youdao.com/dict/law/youdao_dict_service.html)限制程序化提取和向第三方提供相关资料；这是对未来使用方式的警示，不能倒推认定 qwerty 既往行为违法。qwerty 当前代码的一个发音路径按词头生成 dictvoice 在线请求，另有浏览器 speechSynthesis 路径；此处不能推断它把所有录音文件打包进了词表。
+
 DictionaryByGPT4 的 JSONL 每行主要是 word 与 content 长文，没有机器可核验的 sense_id、地区音标或逐条引文。按忽略大小写的词头与这份 ECDICT CSV 比较，7,954 个不同词头里 7,939 个已存在，仅 15 个未命中；这 15 个也含疑似拼写问题，不能视为 15 个已核验新词。它很适合启发“理解、例句、文化、记忆”的卡片设计，但 AI 文本可能混杂词源、典故、例句与推测，需要引用/事实校验。其仓库 LICENSE 为 CC BY-SA 4.0；若要使用，还要核查实际输出与组成素材的权利、标注 AI 来源，并避免覆盖可信词典义项。
 
 ## 2. 新增的上游与主要区别
@@ -79,3 +81,19 @@ Wiktextract 的 sounds 中 ipa 与 audio 可以在同项，也可能分项；数
 | 发布包 | 生成代码 commit、输入快照哈希、schema、构建时间、包 SHA-256、数据许可/署名 | 未生成 |
 
 任何缺失许可证、缺失哈希、无法证明来源或不能在目标许可下再分发的内容都不得进入公开发布包。保留多层包可降低耦合：ECDICT 基础包、增强义项包和独立音频包分别列明组成，不让一个来源的限制暗中扩展到所有包。
+
+## 5. qwerty 复用方式与发布边界
+
+以下是工程风险判断，不是对上游项目是否侵权的认定。代码许可证、词典内容权利、在线服务条款需要分别核验；重新导出为 JSONL 或重写转换器不会清除输入数据的权利限制。[GNU GPL FAQ](https://www.gnu.org/licenses/gpl-faq.en.html#GPLOutput)也说明，通常转换程序的许可证并不自动决定输出内容的许可证。
+
+| 用法 | 本项目判断 | 发布前动作 |
+| --- | --- | --- |
+| 借鉴“来源文件 → 清洗 → 标准词条 → 分片/索引”流程、词表选择交互，独立实现代码 | 可行；[WIPO](https://www.wipo.int/en/web/copyright/faq-copyright)区分思想、方法与具体表达 | 记录设计参考；输入数据仍须单独核权 |
+| 复制 qwerty 转换代码或运行时代码 | GPL-3.0 可提供复用路径，但要保留原署名、许可证和相应源码；不因此取得第三方词典权利 | 明确复制文件和修改记录，检查与词遇 GPL-3.0 的组合分发义务 |
+| 复制 qwerty 的 JSON 词表、音标、译文、例句，转换字段后打包 | 当前来源链没有充分再分发授权证据，不进入默认包 | 逐词书取得上游权利证明；不能以改写格式、AI 改写译文或仅保留单词顺序规避来源审查 |
+| 仅提取 qwerty 中 CET/GRE 等成员关系作为 tag | 大规模复制特定书的选词、分类或排序仍有来源与编排风险；标签名本身也不能证明官方认可 | 优先使用有明确许可的独立来源；保留标签来源和含义，不宣称“官方词表” |
+| 仿照 dictvoice 直接请求有道录音，或缓存/打包返回音频 | 在线使用、批量抓取、音频再分发属于不同授权；“开放 API”致谢并非明确许可 | 无书面或公开可适用许可时，不把它设为默认来源；优先逐文件许可明确的录音或明确标记的系统 TTS |
+
+ECDICT 仓库标示 MIT，但其[选词说明](https://github.com/skywind3000/ECDICT/wiki/%E9%80%89%E8%AF%8D)提到多种词书、考试大纲和语料库，因此 ECDICT 的 oxford、collins、tag、词频等字段也应保留来源审计，不能把“仓库 MIT”理解为每个历史输入都有独立授权证明。Wiktextract 的 MIT 只覆盖提取工具；[Wiktionary 文本](https://en.wiktionary.org/wiki/Wiktionary:Copyrights)采用 CC BY-SA 4.0 / GFDL，例句与媒体还可能有其他权利。open-dictionary 明确将[发布数据](https://github.com/ahpxex/open-dictionary/blob/main/LICENSE-DATA.md)定为 CC BY-SA 4.0，Open English WordNet 的[许可](https://github.com/globalwordnet/english-wordnet/blob/main/LICENSE.md)要求同时署名其团队与 Princeton WordNet，CMUdict 要保留自己的许可声明。
+
+CC BY-SA 内容进入公开产物时必须署名、标注修改，并对实际改编部分履行相同方式共享。[Creative Commons FAQ](https://creativecommons.org/faq/#if-cc-sa-licensed-content-is-included-in-a-database-does-the-entire-database-have-to-be-licensed-under-an-sa-license)指出，仅将独立作品汇编在一个数据库，并不自动要求整个数据库同用 SA；但词遇计划做字段级加工与义项融合，具体是否构成改编要按产物判断。代码仓库的 GPL-3.0 也不能代替数据包的 CC BY-SA 声明。构建时给每个字段保留来源、许可和加工记录，分别发布数据许可清单；无法证明权利的字段剔除。

@@ -9,6 +9,7 @@
 - 建立 ECDICT、Wiktextract、Open English WordNet、open-dictionary、CMUdict 五个固定 Git 子模块引用。
 - 写出中文项目 README、上游数据审计及加工词典格式草案。
 - 约定词典数据、用户单词本与音频文件分别管理，并明确许可证、来源和哈希门禁。
+- 补充 qwerty → kajweb → 原始词书的来源链、在线有道发音与独立重建词典的许可边界。
 
 ### 尚待实现
 

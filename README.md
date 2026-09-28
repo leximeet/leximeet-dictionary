@@ -42,7 +42,7 @@ git submodule status
 ### 为什么暂不把所有参考项目设为子模块
 
 - DictionaryByGPT4：本地 JSONL 实测 8,714 行、按忽略大小写去重后 7,954 个词头，主要是 AI 长文讲解。适合作为经人工核查的可选学习卡片，不适合充当词义或词源事实的主来源；考试词表、生成内容和再分发边界仍需逐项核对。
-- qwerty-learner：本地有 380 个 JSON 词表，含不错的英美音标字段，但其 README 将词表归于 kajweb、语音归于有道。程序的 GPL-3.0 许可证不能自动授予这些第三方词表、译文和音频的再分发权。不能把这些文件一键当作词遇的 tag、音标或音频。
+- qwerty-learner：本地有 380 个 JSON 词表，含不错的英美音标字段，但其 README 将词表归于 kajweb、语音归于有道；kajweb 又自述从词典 App 抓取。程序的 GPL-3.0 许可证不能自动授予这些第三方词表、译文和音频的再分发权。可以借鉴词表加工流程并独立实现，输入仍需有可核查的授权。具体使用边界见[来源审计第 5 节](docs/SOURCES.md#5-qwerty-复用方式与发布边界)。
 - open-dict-data/ipa-dict：可研究美国 IPA 补缺，但美式数据源于 CMUdict 转换，英式数据另有 GPL-3.0 上游；当前优先保留更原始的 CMUdict 与可溯源的 Wiktionary IPA。
 - rspeer/wordfreq：可研究频率排序，但其 README 说明语料大致停在 2021 年；不能用它代替现时词频，也要核对数据许可。
 - MuJing、Read Frog 等应用是消费端/产品参考，不是本项目应重复引入的独立底层词典。MuJing 的本地查询直接使用 ecdict.db；Read Frog 的“Dictionary”是翻译/AI 动作入口。
