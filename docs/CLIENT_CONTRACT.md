@@ -1,43 +1,15 @@
-# 桌面端与插件端消费契约（0.0.1）
+# 词包消费契约（0.0.1）
 
-本契约描述**已经生成的数据结构**与客户端实现责任；当前没有声称词遇桌面端或各浏览器插件已经完成集成。字段实义见 [FORMAT.md](FORMAT.md)，构建与哈希验证见 [BUILD.md](BUILD.md)。
+浏览器插件和桌面端应从固定版本的 GitHub Release 获取资产，校验 `release-candidate.json` 中的外层 SHA-256，再按归档内 manifest 校验每个文件。开发期可以使用本地 `dist/final/`；当前 `candidate-needs-human-review` 状态不能被当成正式自动更新信号。源码仓库用于开发，不作为运行时词典子模块。
 
-## 安装与版本检查
+| 资产 | 适合的客户端 | 主要内容 |
+| --- | --- | --- |
+| `core.tar.gz` | 浏览器轻量离线初装 | 5,000 词 JSONL、清单、许可与审校依据 |
+| `no-audio.tar.gz` | 完整离线查词 | SQLite、完整 JSONL、音频候选目录 |
+| `with-audio.tar.gz` | 需要高频离线播放 | 与无音频版相同的词典，加 436 条录音及逐文件署名 |
 
-完整包客户端只选择一种 `edition.*.json`。先以固定版本 Release 给出的外层 SHA-256 和 `verify-archive` 等价规则流式检查归档，再解包到临时目录，校验 edition 引用的 `manifest.json` SHA-256、`outputs` 字节数/SHA-256 与 SQLite `quick_check`；带发音版还要校验 `audio/manifest.json` 及每个文件的字节数、SHA-256、作者、许可链接和文件页。只接受已实现的 `leximeet.edition.v1`、`leximeet.manifest.v1`、`leximeet.entry.v1`。验证完才原子切换当前只读版本，并保留上一版本用于回滚；校验或迁移失败时保持旧版本可查。用户笔记和单词本不在词包目录，也不随词包覆盖。
+完整包的 `dictionary.sqlite` 有 `entries` 词条表和 `forms` 词形索引；`entries.payload` 与 `entries.jsonl.gz` 使用同一 `leximeet.entry.v1` JSON。先按 Unicode NFC + casefold 查词头，没有结果时才回退到词形索引；大小写完全匹配的结果排前。参考实现可运行 `python3 -m leximeet_dictionary lookup --db build/v0.0.1-final/dictionary.sqlite bank`。
 
-浏览器核心资产使用 `leximeet.core.v1` 的 `core-manifest.json`，其中 `parent_manifest` 固定完整来源清单的哈希，`files` 固定核心 JSONL 与许可材料的哈希，`entry_count` 为实际核心行数。客户端先核对 Release 外层 SHA-256，再逐成员检查路径、类型、大小、哈希、词条 schema 与 ID 唯一性；不得因为核心包只含常用词就跳过许可证。核心包不包含完整 SQLite，也没有与完整词库不同的 `entry_id`。首装时把 JSONL 导入只读 IndexedDB 命名空间，再原子切换命名空间指针。非核心词的按需扩展分片尚未交付，必须显示明确的缺词状态。
+展示时按 `senses[].display_order` 排序。策展义项的中英文和 ECDICT 的 `zh_fallback` 不一定逐义对齐；后者只能标为“词条级回退”。若有 `editorial.display_zh`，标为“词遇审校”，其 `revisions[]` 保留旧值与证据。义项 `labels/topics` 与词条 `exam_tags` 不混用；IPA、CMUdict ARPABET 和 ECDICT 旧音标须区分。WordNet 只显示为未对齐的概念候选。
 
-当前本地归档带 `release_status=candidate-needs-human-review`，可用于消费端集成开发与隔离验证；正式默认下载入口须在词典自身人工复核完成后另行标记。客户端不得仅凭文件名 `0.0.1` 判断它已正式发布。建议按[固定版本的 Release 资产方案](DISTRIBUTION.md)下载和安装。
-
-## 查询
-
-桌面端可以直接以只读模式打开 `dictionary.sqlite`。先运行精确词头查询，再在无结果时查词形索引；按原文大小写完全一致的词头或词形排先，不能将同形异义的多个条目合成一个结果。
-
-~~~sql
-SELECT payload FROM entries
-WHERE lookup_key = :normalized_casefold_word
-ORDER BY CASE WHEN headword = :original_word THEN 0 ELSE 1 END, headword;
-
-SELECT e.payload FROM forms f JOIN entries e USING(entry_id)
-WHERE f.form_key = :normalized_casefold_word
-ORDER BY CASE WHEN f.form_text = :original_word THEN 0 ELSE 1 END, e.headword;
-~~~
-
-`:normalized_casefold_word` 的规则是 Unicode NFC 后 casefold；原始输入单独保留供排序。两条 SQL 是先后回退，不应对已查到的词头再叠加词形结果。`payload` 为 `leximeet.entry.v1` JSON；前端按 `origin` 区分策展词卡和 ECDICT 底座回退；后者可以有独立 Kaikki 功能词英文义项。义项数组保留各来源顺序和定位，词卡默认按 `senses[].display_order` 升序展示：高频功能词的前两个英文原义、策展 core、common、其余功能词义项、rare；同优先级时普通词义先于 `name` 专名。功能词 `source_ref` 单独标记 Kaikki 快照与 `cross_snapshot_alignment=not-attempted`，不能视作已同版策展。这个顺序是展示规则，不能当义项正确性的证明。`ecdict.zh_fallback` 是词条级补充；不可显示在某个 `senses[i]` 下当作已对齐翻译。义项 `labels` 和 `topics` 的 scope 均为 sense，考试 `exam_tags` 是 entry 级来源声称。`legacy_phonetic` 不要标为 IPA；WordNet 候选应在独立区块标为“待对齐概念”。
-
-浏览器插件可将独立核心归档中的 5,000 词 `core.jsonl.gz` 在安装/更新时流式导入自己的只读 IndexedDB 或等效索引。不要每次打开查词面板都解压完整 JSONL，也不要把公共词典与可写用户单词本放在同一重建事务中。完整 `entries.jsonl.gz` 与 SQLite 的 JSON `payload` 采用相同 entry schema；插件与桌面端可用固定样本比对其语义结果。扩展词的独立分片尚未实现，不能宣称插件已有 81 万词离线能力。
-
-若词条存在 `editorial.display_zh`，先以“词遇审校”来源展示该字段，再单独列出 ECDICT 原回退。`editorial.revisions[]` 记录被替换的旧值、目标字段与核对页面，修订后的逐义中文也不得冒称 open-dictionary/Kaikki 原文。没有 `editorial` 的词条仍按原策展义项和 ECDICT 回退展示。
-
-## 发音与缓存
-
-提供方优先级、在线接口示例、配额与缓存权利边界见[音频提供方与按需缓存](AUDIO_PROVIDERS.md)。
-
-带发音版先用 `audio/manifest.json` 按 `entry_id` 找离线素材，再由用户操作触发播放。无音频版、或带发音版无对应离线文件时，可用 `audio_candidates` 表/目录找到 Commons 文件线索；点击后通过 Commons Action API `imageinfo` 重新核对许可、作者、文件页、MIME 和大小，下载并计算内容哈希，再写入客户端独立缓存。候选 URL **未经核权**，不能直接作为离线素材或默认自动播放。缓存键包含文本、地区、提供方、音色/文件、语速和版本；地区/音标/词性不明确时，应保留“未指定”，避免把名词 `record` 的读音贴到动词义项。
-
-客户端应展示来源文件作者、许可名称及链接、文件页，并提供独立缓存清理入口。请求失败、离线、没有授权素材或没有设备 TTS 时，朗读按钮可提示不可用，但不得阻断本地词卡。系统 TTS 若作为客户端备选，应显示为“合成语音”，并遵守设备/服务的使用条款；公共词典不把合成音频伪装为真人录音。
-
-## 用户数据与下一版迁移
-
-`entry_id`/`sense_id` 在 0.0.1 固定输入与规则内确定。以后更换 open-dictionary 版本、拆分义项或升级 ECDICT 时，构建端必须给出旧 ID 到新 ID 的重定向账本并运行回归审校；客户端在无匹配时仍保存用户看到的旧词卡快照、原文、笔记和复习状态。用户自定义标签/单词本从来不写入公共 `entries`。这部分升级、回滚和跨端一致性仍需在真实桌面与插件端验证。
+朗读先查独立离线录音包；其余在用户点击时查询并缓存已核权的 Commons 文件或使用设备 TTS。失败不影响离线查词。词包只读，用户单词本、标签、笔记和朗读缓存放在独立存储；安装新包先验证再原子切换，并保留旧版以便回滚。当前本仓库只验证了参考包与格式，真实客户端接入测试由各消费项目承担。

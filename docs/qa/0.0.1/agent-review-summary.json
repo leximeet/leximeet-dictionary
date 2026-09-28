@@ -7,9 +7,10 @@
     "curated": 107,
     "ecdict-fallback": 103,
     "editorial_concern": 9,
+    "editorial_corrected": 8,
     "entry_level_fallback_only": 99,
     "rows": 210,
     "source_fields_consistent": 210
   },
-  "scope": "结构与原字段一致性及抽样预览阅读；不等于独立词义或真人听辨通过"
+  "scope": "结构与原字段一致性、八处可追溯词遇修订及抽样预览阅读；不等于独立词义或真人听辨通过"
 }
