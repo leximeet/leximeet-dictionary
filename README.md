@@ -8,6 +8,7 @@
 <h1>LexiMeet Dictionary · 词遇开放词典</h1>
 <p><strong>一份可核验、可离线发音、供桌面端与浏览器插件共用的英汉词典。</strong></p>
 <p>
+  <a href="https://github.com/leximeet/leximeet-dictionary/releases/tag/v0.0.1">下载 0.0.1</a> ·
   <a href="docs/CLIENT_CONTRACT.md">词包接入</a> ·
   <a href="docs/BUILD.md">从源码构建</a> ·
   <a href="DATA-LICENSE.md">数据来源</a> ·
@@ -23,7 +24,7 @@
 | **核心版 `core`** | 117,902 条：全部 84,212 条 open-dictionary 词卡 + 33,690 条有频率或考试依据的补充词；117,902 条离线音频 | 桌面端、插件端内置 |
 | **完整版 `full`** | 811,092 条词条；共享核心词的 117,902 条离线音频 | 用户主动下载，校验后替换 |
 
-数字来自当前固定输入，最终以同版 `release.json` 为准。两版词卡都保留完整内容；**非核心词在 0.0.1 没有随包音频**，端侧可按需使用在线朗读。核心音频包含 436 条逐文件署名的 Commons 真人录音和标明来源的本地合成录音；固定真人录音快照随源码提供，合成音色与真人录音不同。尚未发布的本地构建不能冒充 GitHub Release。
+正式词包见 [v0.0.1 Release](https://github.com/leximeet/leximeet-dictionary/releases/tag/v0.0.1)，客户端以同版 `release.json` 中的文件大小和 SHA-256 为准。两版词卡都保留完整内容；**非核心词在 0.0.1 没有随包音频**，端侧可按需使用在线朗读。核心音频包含 436 条逐文件署名的 Commons 真人录音和标明来源的本地合成录音；固定真人录音快照随源码提供，合成音色与真人录音不同。尚未发布的本地构建不能冒充 GitHub Release。
 
 ## 为什么做这份词典
 

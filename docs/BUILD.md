@@ -66,14 +66,14 @@ python3 -m unittest discover -s tests -v
 
 ## 4. 在 GitHub Actions 构建并发布
 
-本地 `main` 上已经准备好 `v0.0.1` tag 后，由维护者推送代码和 tag：
+v0.0.1 已由 [全量构建 Action](https://github.com/leximeet/leximeet-dictionary/actions/runs/36463973300) 验证并在 [Release](https://github.com/leximeet/leximeet-dictionary/releases/tag/v0.0.1) 发布。下列命令保留为首次发布流程参考；已有 tag 或 Release 不应照搬重推：
 
 ```bash
 git push origin main
 git push origin v0.0.1
 ```
 
-等待 `Dictionary tests` 通过，再在 GitHub 仓库的 **Actions → Build 0.0.1 dictionary draft → Run workflow** 中选 `main` 手动运行。工作流从远端 `v0.0.1` tag 检出源码，下载并按哈希验证固定数据，从固定快照逐条核验 436 条真人录音，生成所有核心词音频，构建 `core` 和 `full`，深检两个词包，最后上传 `release.json` 与全部分片到 **草稿 Release**。它不会推送代码、打 tag 或正式发布。维护者检查运行日志、草稿资产与抽样音质后，在 GitHub 页面发布草稿。正式 Release 出现前，其他项目不要依赖该下载地址。
+等待 `Dictionary tests` 通过，再在 GitHub 仓库的 **Actions → Build 0.0.1 dictionary draft → Run workflow** 中选 `main` 手动运行。工作流从远端 `v0.0.1` tag 检出源码，下载并按哈希验证固定数据，从固定快照逐条核验 436 条真人录音，生成所有核心词音频，构建 `core` 和 `full`，深检两个词包，最后上传 `release.json` 与全部分片到 **草稿 Release**。它不会推送代码、打 tag 或正式发布。维护者检查运行日志、草稿资产与抽样音质后，在 GitHub 页面发布草稿。其他项目应使用已发布版本的固定下载地址。
 
 这条流水线使用标准 `macos-15-intel` 运行器，受 GitHub 单次任务 6 小时和运行器磁盘限制；音频工具版本若与 `audio-tools.lock.json` 不同会立即停止，不会悄悄换声线。**每次修改工作流后仍须以对应 commit 的远端运行结果为准。**失败时可以用本页 1–3 节在本地构建并复核，排查原因后重新运行；已有草稿 Release 不会被自动覆盖。
 
