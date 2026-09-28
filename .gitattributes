@@ -1,2 +1,5 @@
 # 原版授权文本必须逐字保留，包括原文件的行末空白。
 notices/* -whitespace
+
+# QA 工作表保留 csv.writer 的原始 CRLF，确保提交后的文件哈希与复核产物一致。
+docs/qa/0.0.1/*.csv -text -whitespace
