@@ -6,17 +6,14 @@ import hashlib
 import json
 import subprocess
 import tempfile
-import tarfile
 import unittest
 import zipfile
 from pathlib import Path
 
-from leximeet_dictionary.builder import build, file_hash, generator_state, lookup, make_entry, stable_id, verify_package, wordnet_candidates
+from leximeet_dictionary.builder import build, generator_state, lookup, make_entry, stable_id, verify_package, wordnet_candidates
 from leximeet_dictionary.editorial import apply_correction, load_corrections
 from leximeet_dictionary.function_words import SOURCE as FUNCTION_SOURCE
-from leximeet_dictionary.core import verify_core_archive
 from leximeet_dictionary.integrity import verify_content
-from leximeet_dictionary.package import package, verify_archive
 from leximeet_dictionary.quality import report
 
 
@@ -170,9 +167,9 @@ class BuilderTests(unittest.TestCase):
             lock.write_text(json.dumps({"artifacts": [{"id": name, "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
                                                         "bytes": path.stat().st_size} for name, path in paths.items()]}))
             output = root / "out"
-            manifest = build(paths, lock, output, core_size=2, editorial_path=editorial_path)
-            second = build(paths, lock, root / "out-again", core_size=2, editorial_path=editorial_path)
-            self.assertEqual(manifest["release_status"], "candidate-needs-human-review")
+            manifest = build(paths, lock, output, editorial_path=editorial_path)
+            second = build(paths, lock, root / "out-again", editorial_path=editorial_path)
+            self.assertEqual(manifest["release_status"], "data-verified")
             self.assertEqual(manifest["outputs"], second["outputs"])
             self.assertEqual(manifest["counts"]["total_entries"], 4)
             self.assertEqual(manifest["counts"]["function_word_senses"], 1)
@@ -194,47 +191,7 @@ class BuilderTests(unittest.TestCase):
                 sample = next(csv.DictReader(stream))
             self.assertIn("english_gloss_preview", sample)
             self.assertEqual(sample["review_status"], "pending")
-            audio_dir = output / "audio"
-            (audio_dir / "files").mkdir(parents=True)
-            (audio_dir / "files" / "test.ogg").write_bytes(b"OggSfixture")
-            size, sha = file_hash(audio_dir / "files" / "test.ogg")
-            audio_manifest = {"schema_version": "leximeet.audio.v1", "offline_asset_count": 1,
-                              "assets": [{"path": "files/test.ogg", "bytes": size, "sha256": sha,
-                                          "artist": "Fixture", "license": "CC0", "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
-                                          "source_page": "https://commons.wikimedia.org/wiki/File:fixture.ogg", "attribution": "Fixture"}]}
-            (audio_dir / "manifest.json").write_text(json.dumps(audio_manifest))
-            core_size, core_sha = file_hash(output / "manifest.json")
-            audio_size, audio_sha = file_hash(audio_dir / "manifest.json")
-            (output / "edition.with-audio.json").write_text(json.dumps({"schema_version": "leximeet.edition.v1",
-                "edition": "with-audio",
-                "dictionary_manifest_bytes": core_size, "dictionary_manifest_sha256": core_sha,
-                "audio_manifest_bytes": audio_size, "audio_manifest_sha256": audio_sha}))
-            first_packages = package(output, root / "dist-one")
-            second_packages = package(output, root / "dist-two")
-            self.assertEqual(first_packages["artifacts"], second_packages["artifacts"])
-            core_archive = root / "dist-one" / "leximeet-dictionary-0.0.1-core.tar.gz"
-            core_asset = next(item for item in first_packages["artifacts"] if item["edition"] == "core")
-            core_manifest = verify_core_archive(core_archive, core_asset["sha256"])
-            self.assertEqual(core_manifest["entry_count"], 2)
-            self.assertIn("editorial/corrections.json", core_manifest["files"])
-            with tarfile.open(core_archive, "r:gz") as archive:
-                self.assertFalse(any(item.name.endswith("dictionary.sqlite") for item in archive))
-                self.assertTrue(any(item.name.endswith("DATA-LICENSE.md") for item in archive))
-            with self.assertRaisesRegex(ValueError, "外层 SHA-256"):
-                verify_core_archive(core_archive, "0" * 64)
-            with tarfile.open(root / "dist-one" / "leximeet-dictionary-0.0.1-no-audio.tar.gz", "r:gz") as archive:
-                self.assertFalse(any("/audio/files/" in name for name in archive.getnames()))
-            with tarfile.open(root / "dist-one" / "leximeet-dictionary-0.0.1-with-audio.tar.gz", "r:gz") as archive:
-                self.assertTrue(any("/audio/files/" in name for name in archive.getnames()))
-            for asset in first_packages["artifacts"]:
-                if asset["edition"] != "core":
-                    result = verify_archive(root / "dist-one" / asset["file"], asset["sha256"])
-                    self.assertEqual(result["edition"], asset["edition"])
-                    with tarfile.open(root / "dist-one" / asset["file"], "r:gz") as archive:
-                        archive.extractall(root / "installed", filter="data")
-                    installed = root / "installed" / asset["file"].removesuffix(".tar.gz")
-                    self.assertEqual(verify_package(installed)["counts"]["total_entries"], 4)
-            with (output / "core.jsonl.gz").open("ab") as stream:
+            with (output / "entries.jsonl.gz").open("ab") as stream:
                 stream.write(b"damage")
             with self.assertRaisesRegex(ValueError, "词包损坏"):
                 verify_package(output)

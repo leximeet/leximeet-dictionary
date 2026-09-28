@@ -12,4 +12,4 @@
 | 词遇审校 | `editorial/corrections.json`，SHA-256 记在产物 `manifest.json` |
 | 离线录音 | `audio.lock.json`，每个 Commons 文件另有作者、许可和内容哈希 |
 
-构建器在读入前拒绝哈希不匹配；最终产物的所有输入、输出哈希和生成 commit 见 `build/v0.0.1-final/manifest.json`。DictionaryByGPT4 和 qwerty-learner 是 0.0.2 的待评估来源，目前不是 0.0.1 输入。
+构建器在读入前拒绝哈希不匹配；数据底座的输入、输出哈希和生成 commit 见 `build/base/manifest.json`，发布资产哈希见 `dist/v0.0.1/release.json`。DictionaryByGPT4 和 qwerty-learner 是 0.0.2 的待评估来源，目前不是 0.0.1 输入。

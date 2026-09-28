@@ -12,7 +12,7 @@ from .builder import build, lookup, verify_package, wordnet_candidates
 def parser() -> argparse.ArgumentParser:
     root = argparse.ArgumentParser(prog="python -m leximeet_dictionary")
     commands = root.add_subparsers(dest="command", required=True)
-    build_cmd = commands.add_parser("build", help="生成 0.0.1 无音频公共词典与候选目录")
+    build_cmd = commands.add_parser("build", help="生成固定来源的 0.0.1 词典数据底座")
     build_cmd.add_argument("--distribution", type=Path, required=True)
     build_cmd.add_argument("--audit", type=Path, required=True)
     build_cmd.add_argument("--ecdict", type=Path, required=True)
@@ -22,7 +22,6 @@ def parser() -> argparse.ArgumentParser:
     build_cmd.add_argument("--editorial", type=Path, default=Path("editorial/corrections.json"))
     build_cmd.add_argument("--lock", type=Path, default=Path("sources.lock.json"))
     build_cmd.add_argument("--out", type=Path, required=True)
-    build_cmd.add_argument("--core-size", type=int, default=5000)
     lookup_cmd = commands.add_parser("lookup", help="本地只读查询")
     lookup_cmd.add_argument("--db", type=Path, required=True)
     lookup_cmd.add_argument("word")
@@ -54,23 +53,37 @@ def parser() -> argparse.ArgumentParser:
     report_cmd = commands.add_parser("report", help="生成覆盖率、200 条分层复核样本和查询基线")
     report_cmd.add_argument("--db", type=Path, required=True)
     report_cmd.add_argument("--out", type=Path, required=True)
-    package_cmd = commands.add_parser("package", help="生成双版本确定性 tar.gz 候选归档")
-    package_cmd.add_argument("--root", type=Path, required=True)
-    package_cmd.add_argument("--out", type=Path, required=True)
-    core_verify_cmd = commands.add_parser("verify-core", help="核验独立核心资产的 SHA-256、清单与词条")
-    core_verify_cmd.add_argument("archive", type=Path)
-    core_verify_cmd.add_argument("--sha256", help="从固定版本 Release 清单取得的外层哈希")
-    archive_verify_cmd = commands.add_parser("verify-archive", help="流式核验完整无音频/带发音归档")
-    archive_verify_cmd.add_argument("archive", type=Path)
-    archive_verify_cmd.add_argument("--sha256", help="从固定版本 Release 清单取得的外层哈希")
+    offline_cmd = commands.add_parser("offline-audio", help="生成可续跑的核心词离线音频缓存")
+    offline_cmd.add_argument("--db", type=Path, required=True)
+    offline_cmd.add_argument("--out", type=Path, required=True)
+    offline_cmd.add_argument("--human-dir", type=Path, help="已核验 Commons 录音目录")
+    offline_cmd.add_argument("--workers", type=int, default=8)
+    offline_cmd.add_argument("--batch-size", type=int, default=256)
+    offline_cmd.add_argument("--max-entries", type=int, help="试产用；部分缓存不能打正式包")
+    offline_cmd.add_argument("--all-entries", action="store_true", help="后续版本实验用；0.0.1 只要求核心词")
+    release_cmd = commands.add_parser("release-build", help="生成共享核心分片的 core/full 两版资产")
+    release_cmd.add_argument("--source", type=Path, required=True)
+    release_cmd.add_argument("--audio-cache", type=Path, required=True)
+    release_cmd.add_argument("--out", type=Path, required=True)
+    release_cmd.add_argument("--shard-mib", type=int, default=256)
+    release_verify = commands.add_parser("release-verify", help="校验 core 或 full 的下载资产")
+    release_verify.add_argument("directory", type=Path)
+    release_verify.add_argument("--edition", choices=("core", "full"), default="full")
+    release_verify.add_argument("--deep", action="store_true")
+    extract = commands.add_parser("release-audio", help="按 entry_id 从音频分片提取一段供试听")
+    extract.add_argument("directory", type=Path)
+    extract.add_argument("--edition", choices=("core", "full"), required=True)
+    extract.add_argument("--entry-id", required=True)
+    extract.add_argument("--out", type=Path, required=True)
+    assemble = commands.add_parser("release-assemble", help="校验分片并重组完整版 SQLite")
+    assemble.add_argument("directory", type=Path)
+    assemble.add_argument("--out", type=Path, required=True)
     return root
 
 
 def main() -> None:
     args = parser().parse_args()
     if args.command == "build":
-        if args.core_size < 1:
-            parser().error("--core-size 必须为正整数")
         inputs = {
             "open-dictionary-v2-distribution-jsonl-gz": args.distribution,
             "open-dictionary-v2-audit-jsonl-gz": args.audit,
@@ -79,7 +92,7 @@ def main() -> None:
             "english-wordnet-2025-core": args.wordnet,
             "wiktextract-function-words": args.function_words,
         }
-        result = build(inputs, args.lock, args.out, args.core_size, args.editorial)
+        result = build(inputs, args.lock, args.out, editorial_path=args.editorial)
     elif args.command == "lookup":
         result = {"entries": lookup(args.db, args.word)}
         if args.wordnet:
@@ -92,15 +105,24 @@ def main() -> None:
     elif args.command == "report":
         from .quality import report
         result = report(args.db, args.out)
-    elif args.command == "package":
-        from .package import package
-        result = package(args.root, args.out)
-    elif args.command == "verify-core":
-        from .core import verify_core_archive
-        result = verify_core_archive(args.archive, args.sha256)
-    elif args.command == "verify-archive":
-        from .package import verify_archive
-        result = verify_archive(args.archive, args.sha256)
+    elif args.command == "offline-audio":
+        from .offline_audio import build_offline_audio
+        result = build_offline_audio(args.db, args.out, args.human_dir,
+                                     args.workers, args.batch_size, args.max_entries,
+                                     args.all_entries)
+    elif args.command == "release-build":
+        from .release import build_release
+        result = build_release(args.source, args.audio_cache, args.out,
+                               args.shard_mib * 1024 * 1024)
+    elif args.command == "release-verify":
+        from .release import verify_release
+        result = verify_release(args.directory, args.edition, args.deep)
+    elif args.command == "release-audio":
+        from .release import extract_audio
+        result = extract_audio(args.directory, args.edition, args.entry_id, args.out)
+    elif args.command == "release-assemble":
+        from .release import assemble_sqlite
+        result = assemble_sqlite(args.directory, args.out)
     else:
         from .audio import build_audio, cache_on_demand, install_locked_audio, verify_audio, write_audio_review_sheet
         if args.command == "audio-pack":
@@ -113,6 +135,9 @@ def main() -> None:
             result = write_audio_review_sheet(args.audio_manifest, args.out, args.minimum)
         else:
             result = verify_audio(args.directory)
+    if args.command in ("audio-pack", "audio-pack-locked", "verify-audio"):
+        result = {"offline_asset_count": result["offline_asset_count"],
+                  "manifest": str((args.out if hasattr(args, "out") else args.directory) / "manifest.json")}
     print(json.dumps(result, ensure_ascii=False, indent=2))
 
 

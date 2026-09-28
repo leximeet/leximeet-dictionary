@@ -335,7 +335,7 @@ def add_wordnet(db: sqlite3.Connection, archive_path: Path) -> tuple[int, int]:
     return synsets, lemmas
 
 
-def build(paths: dict[str, Path], lock_path: Path, out: Path, core_size: int = 5000,
+def build(paths: dict[str, Path], lock_path: Path, out: Path,
           editorial_path: Path | None = None) -> dict:
     out.mkdir(parents=True, exist_ok=True)
     inputs = verify_inputs(paths, lock_path)
@@ -408,7 +408,6 @@ def build(paths: dict[str, Path], lock_path: Path, out: Path, core_size: int = 5
         counts["senses"] = sum(len(json.loads(row[0])["senses"]) for row in dictionary.execute("SELECT payload FROM entries"))
         files = {}
         files["entries.jsonl.gz"] = write_gzip_lines(out / "entries.jsonl.gz", (row[0] for row in dictionary.execute("SELECT payload FROM entries ORDER BY lookup_key,headword,entry_id")))
-        files["core.jsonl.gz"] = write_gzip_lines(out / "core.jsonl.gz", (row[0] for row in dictionary.execute("SELECT payload FROM entries WHERE rank IS NOT NULL ORDER BY rank,headword,entry_id LIMIT ?", (core_size,))))
         files["audio-candidates.jsonl.gz"] = write_gzip_lines(out / "audio-candidates.jsonl.gz", (canonical(dict(zip(("entry_id", "headword", "pos", "url", "format", "status", "source"), row))) for row in dictionary.execute("SELECT * FROM audio_candidates ORDER BY headword,pos,url")))
     finally:
         dictionary.close()
@@ -440,23 +439,11 @@ def build(paths: dict[str, Path], lock_path: Path, out: Path, core_size: int = 5
         "counts": dict(counts),
         "inputs": inputs,
         "outputs": {name: {"bytes": size, "sha256": sha} for name, (size, sha) in files.items()},
-        "core_limit": core_size,
         "data_license": "CC BY-SA 4.0 for Wiktionary/open-dictionary derived content; see DATA-LICENSE.md",
-        # ECDICT 采用署名与权利通知处理策略；候选状态继续等待人工词义和端侧验收。
-        "release_status": "candidate-needs-human-review",
+        # 仅表示数据底座通过程序校验；人工抽听与内容复核另见 QA 文档。
+        "release_status": "data-verified",
     }
     (out / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, sort_keys=True, indent=2) + "\n", encoding="utf-8")
-    manifest_size, manifest_sha = file_hash(out / "manifest.json")
-    edition = {
-        "schema_version": "leximeet.edition.v1", "dictionary_version": VERSION,
-        "edition": "no-audio", "dictionary_manifest": "manifest.json",
-        "dictionary_manifest_bytes": manifest_size, "dictionary_manifest_sha256": manifest_sha,
-        "offline_audio_assets": 0,
-        "online_audio": {"provider": "Wikimedia Commons Action API", "trigger": "user-click",
-                         "cache_key_fields": ["text", "region", "provider", "voice", "speed", "version"],
-                         "candidate_catalog": "audio-candidates.jsonl.gz"},
-    }
-    (out / "edition.no-audio.json").write_text(json.dumps(edition, ensure_ascii=False, sort_keys=True, indent=2) + "\n", encoding="utf-8")
     return manifest
 
 
@@ -489,22 +476,7 @@ def verify_package(out: Path) -> dict:
         size, sha = file_hash(out / name)
         if (size, sha) != (expected["bytes"], expected["sha256"]):
             raise ValueError(f"词包损坏：{name}")
-    # 完整无音频版与带发音版各自可单独安装；构建目录则允许同时存在两个 edition。
-    editions = [out / f"edition.{name}.json" for name in ("no-audio", "with-audio")]
-    if not any(path.is_file() for path in editions):
-        raise ValueError("词包缺少 edition 清单")
-    for edition_path in editions:
-        if not edition_path.is_file():
-            continue
-        edition = json.loads(edition_path.read_text(encoding="utf-8"))
-        name = edition_path.name.removeprefix("edition.").removesuffix(".json")
-        if edition.get("edition") != name or file_hash(out / "manifest.json") != (
-            edition["dictionary_manifest_bytes"], edition["dictionary_manifest_sha256"]
-        ):
-            raise ValueError(f"{name} 清单不匹配")
-        if name == "with-audio":
-            from .audio import verify_audio
-            verify_audio(out / "audio")
+    # 此目录只是一份未打包的数据底座；可安装的两个版本由 release-build 独立生成。
     with closing(sqlite3.connect(f"file:{out / 'dictionary.sqlite'}?mode=ro", uri=True)) as db:
         if db.execute("PRAGMA quick_check").fetchone()[0] != "ok":
             raise ValueError("SQLite 完整性检查失败")

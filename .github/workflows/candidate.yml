@@ -1,4 +1,4 @@
-name: Dictionary 0.0.1 data check
+name: Dictionary 0.0.1 checks
 
 on:
   workflow_dispatch:
@@ -7,7 +7,7 @@ permissions:
   contents: read
 
 jobs:
-  candidate:
+  dictionary:
     runs-on: ubuntu-latest
     timeout-minutes: 240
     steps:
@@ -58,3 +58,4 @@ jobs:
           python -m leximeet_dictionary audio-review-sheet \
             --audio-manifest build/v0.0.1/audio/manifest.json \
             --out build/v0.0.1/qa/audio-review-sample.csv
+      # 811,092 条合成录音与分片 Release 在发布机按 docs/BUILD.md 构建和深检；CI 不自动发布。

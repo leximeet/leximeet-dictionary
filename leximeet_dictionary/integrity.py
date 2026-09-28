@@ -15,11 +15,11 @@ from .function_words import SOURCE as FUNCTION_SOURCE
 
 
 def verify_content(root: Path) -> dict:
-    """逐行比对 JSONL 与 SQLite，并确认核心分片和引用关系；不修改词包。"""
+    """逐行比对 JSONL 与 SQLite，并确认来源引用关系；不修改词包。"""
     manifest = verify_package(root)
     editorial_file = root / "editorial" / "corrections.json"
     corrections = load_corrections(editorial_file) if editorial_file.exists() else {}
-    counts = {"entries": 0, "curated": 0, "fallback": 0, "senses": 0, "core": 0,
+    counts = {"entries": 0, "curated": 0, "fallback": 0, "senses": 0,
               "function_word_entries": 0, "function_word_senses": 0,
               "audio_candidates": 0, "editorial_entries": 0, "editorial_revisions": 0}
     sense_ids: set[str] = set()
@@ -91,13 +91,6 @@ def verify_content(root: Path) -> dict:
                         raise ValueError(f"义项来源引用无效：{entry['headword']}")
                 counts["entries"] += 1
                 counts["senses"] += len(senses)
-        core_rows = db.execute("SELECT payload FROM entries WHERE rank IS NOT NULL "
-                               "ORDER BY rank,headword,entry_id LIMIT ?", (manifest["core_limit"],))
-        with gzip.open(root / "core.jsonl.gz", "rt", encoding="utf-8") as source:
-            for source_line, db_row in zip_longest(source, core_rows):
-                if source_line is None or db_row is None or source_line.rstrip("\n") != db_row[0]:
-                    raise ValueError("核心 JSONL 与 SQLite 高频选择不一致")
-                counts["core"] += 1
         candidate_rows = db.execute("SELECT * FROM audio_candidates ORDER BY headword,pos,url")
         names = ("entry_id", "headword", "pos", "url", "format", "status", "source")
         with gzip.open(root / "audio-candidates.jsonl.gz", "rt", encoding="utf-8") as source:

@@ -215,19 +215,6 @@ def build_audio(db_path: Path, out: Path, limit: int = 500) -> dict:
                 "offline_asset_count": len(selected), "assets": selected, "skipped": skipped,
                 "review_level": "automated-metadata-review; human-sample-review-pending"}
     (out / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, sort_keys=True, indent=2) + "\n", encoding="utf-8")
-    dictionary_dir = db_path.parent
-    dictionary_manifest_size, dictionary_manifest_sha = file_hash(dictionary_dir / "manifest.json")
-    audio_manifest_size, audio_manifest_sha = file_hash(out / "manifest.json")
-    edition = {"schema_version": "leximeet.edition.v1", "dictionary_version": "0.0.1",
-               "edition": "with-audio", "dictionary_manifest": "manifest.json",
-               "dictionary_manifest_bytes": dictionary_manifest_size,
-               "dictionary_manifest_sha256": dictionary_manifest_sha,
-               "audio_manifest": str((out / "manifest.json").relative_to(dictionary_dir)),
-               "audio_manifest_bytes": audio_manifest_size, "audio_manifest_sha256": audio_manifest_sha,
-               "offline_audio_assets": len(selected),
-               "remaining_audio": "on-demand Commons cache; optional device TTS"}
-    (dictionary_dir / "edition.with-audio.json").write_text(
-        json.dumps(edition, ensure_ascii=False, sort_keys=True, indent=2) + "\n", encoding="utf-8")
     return manifest
 
 
@@ -286,19 +273,6 @@ def install_locked_audio(db_path: Path, out: Path, audio_lock: Path,
             if (size, sha256) != (asset["bytes"], asset["sha256"]):
                 raise ValueError(f"固定录音文件损坏：{asset['path']}")
     shutil.copyfile(audio_lock, out / "manifest.json")
-    dictionary_dir = db_path.parent
-    dictionary_manifest_size, dictionary_manifest_sha = file_hash(dictionary_dir / "manifest.json")
-    audio_manifest_size, audio_manifest_sha = file_hash(out / "manifest.json")
-    edition = {"schema_version": "leximeet.edition.v1", "dictionary_version": "0.0.1",
-               "edition": "with-audio", "dictionary_manifest": "manifest.json",
-               "dictionary_manifest_bytes": dictionary_manifest_size,
-               "dictionary_manifest_sha256": dictionary_manifest_sha,
-               "audio_manifest": str((out / "manifest.json").relative_to(dictionary_dir)),
-               "audio_manifest_bytes": audio_manifest_size, "audio_manifest_sha256": audio_manifest_sha,
-               "offline_audio_assets": len(assets),
-               "remaining_audio": "on-demand Commons cache; optional device TTS"}
-    (dictionary_dir / "edition.with-audio.json").write_text(
-        json.dumps(edition, ensure_ascii=False, sort_keys=True, indent=2) + "\n", encoding="utf-8")
     return lock
 
 
@@ -372,15 +346,6 @@ def verify_audio(out: Path) -> dict:
             raise ValueError(f"音频文件损坏：{asset['path']}")
         if not all(asset.get(key) for key in ("artist", "license", "license_url", "source_page", "attribution")):
             raise ValueError(f"音频文件缺少许可与署名：{asset['path']}")
-    edition = json.loads((out.parent / "edition.with-audio.json").read_text(encoding="utf-8"))
-    if edition.get("edition") != "with-audio" or file_hash(out / "manifest.json") != (
-        edition["audio_manifest_bytes"], edition["audio_manifest_sha256"]
-    ):
-        raise ValueError("带发音版清单不匹配")
-    if file_hash(out.parent / "manifest.json") != (
-        edition["dictionary_manifest_bytes"], edition["dictionary_manifest_sha256"]
-    ):
-        raise ValueError("带发音版引用的词典清单不匹配")
     return manifest
 
 

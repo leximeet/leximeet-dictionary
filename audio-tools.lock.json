@@ -1,0 +1,10 @@
+{
+  "schema_version": "leximeet.offline-audio.v1",
+  "engine": "eSpeak NG text-to-speech: 1.52.0",
+  "encoder": "opusenc opus-tools 0.2 (using libopus 1.6.1)",
+  "voice": "en-us",
+  "speed": 160,
+  "bitrate_kbps": 16,
+  "complexity": 5,
+  "format": "Ogg Opus"
+}
