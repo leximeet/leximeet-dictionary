@@ -25,12 +25,16 @@ python3 -m leximeet_dictionary verify build/base --deep
 
 ## 2. 离线录音
 
-先从固定的 [audio.lock.json](../audio.lock.json) 复核并安装 436 条 Commons 真人录音。此命令联网核对当前署名和许可；若已有从相同锁生成的缓存，可用 `--source-dir <目录>` 复用文件哈希，但它不能代替首次在线权利核查。
+436 条 Commons 真人录音在首次采集时已按 [audio.lock.json](../audio.lock.json) 核对作者、许可和文件哈希。固定录音快照随源码提供，避免 GitHub 共享出口一次请求数百个 Commons 文件而触发限流。安装时先核对快照整体哈希，再由构建器逐文件核对字节数、SHA-256 和固定署名；必要时可不传 `--source-dir` 单独进行在线复核，但在线复核可能收到 HTTP 429。
 
 ```bash
+shasum -a 256 -c sources/commons-audio-v0.0.1.sha256
+mkdir -p build/commons-audio
+tar -xzf sources/commons-audio-v0.0.1.tar.gz -C build/commons-audio
 python3 -m leximeet_dictionary audio-pack-locked \
   --db build/base/dictionary.sqlite --out build/base/audio \
-  --audio-lock audio.lock.json --sources-lock sources.lock.json
+  --audio-lock audio.lock.json --sources-lock sources.lock.json \
+  --source-dir build/commons-audio
 python3 -m leximeet_dictionary verify-audio build/base/audio
 ```
 
@@ -69,8 +73,8 @@ git push origin main
 git push origin v0.0.1
 ```
 
-等待 `Dictionary tests` 通过，再在 GitHub 仓库的 **Actions → Build 0.0.1 dictionary draft → Run workflow** 中选 `main` 手动运行。工作流从远端 `v0.0.1` tag 检出源码，下载并按哈希验证固定数据，核权 436 条真人录音，生成所有核心词音频，构建 `core` 和 `full`，深检两个词包，最后上传 `release.json` 与全部分片到 **草稿 Release**。它不会推送代码、打 tag 或正式发布。维护者检查运行日志、草稿资产与抽样音质后，在 GitHub 页面发布草稿。正式 Release 出现前，其他项目不要依赖该下载地址。
+等待 `Dictionary tests` 通过，再在 GitHub 仓库的 **Actions → Build 0.0.1 dictionary draft → Run workflow** 中选 `main` 手动运行。工作流从远端 `v0.0.1` tag 检出源码，下载并按哈希验证固定数据，从固定快照逐条核验 436 条真人录音，生成所有核心词音频，构建 `core` 和 `full`，深检两个词包，最后上传 `release.json` 与全部分片到 **草稿 Release**。它不会推送代码、打 tag 或正式发布。维护者检查运行日志、草稿资产与抽样音质后，在 GitHub 页面发布草稿。正式 Release 出现前，其他项目不要依赖该下载地址。
 
-这条流水线使用标准 `macos-15-intel` 运行器，受 GitHub 单次任务 6 小时和运行器磁盘限制；音频工具版本若与 `audio-tools.lock.json` 不同会立即停止，不会悄悄换声线。**流水线配置已写入仓库，远端实际运行要等维护者推送后才能验证。**失败时可以用本页 1–3 节在本地构建并复核，排查原因后重新运行；已有草稿 Release 不会被自动覆盖。
+这条流水线使用标准 `macos-15-intel` 运行器，受 GitHub 单次任务 6 小时和运行器磁盘限制；音频工具版本若与 `audio-tools.lock.json` 不同会立即停止，不会悄悄换声线。**每次修改工作流后仍须以对应 commit 的远端运行结果为准。**失败时可以用本页 1–3 节在本地构建并复核，排查原因后重新运行；已有草稿 Release 不会被自动覆盖。
 
 不要把约 1.74 GB 的完整版放进 Actions artifact：GitHub Free 组织的 artifact 存储额度为 500 MB，而 [Release](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases) 单文件上限 2 GiB、总量没有相同限制。本项目按不超过 256 MiB 切分大文件。正式发布后，端侧按 [客户端接入协议](CLIENT_CONTRACT.md) 获取固定版本的 `release.json`，以其中的哈希和大小为准。需要手动上传本地已核验词包时，可参考 [GitHub CLI `gh release create`](https://cli.github.com/manual/gh_release_create)；这只是流水线失败时的备选路径。

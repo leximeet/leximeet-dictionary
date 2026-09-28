@@ -65,13 +65,17 @@ jobs:
             --out build/base
           python -m leximeet_dictionary verify build/base --deep
           df -h .
-      - name: 核权真人录音并生成全部核心词离线音频
+      - name: 核验固定真人录音快照并生成全部核心词离线音频
         shell: bash
         run: |
           set -euo pipefail
+          shasum -a 256 -c sources/commons-audio-v0.0.1.sha256
+          mkdir -p build/commons-audio
+          tar -xzf sources/commons-audio-v0.0.1.tar.gz -C build/commons-audio
           python -m leximeet_dictionary audio-pack-locked \
             --db build/base/dictionary.sqlite --out build/base/audio \
-            --audio-lock audio.lock.json --sources-lock sources.lock.json
+            --audio-lock audio.lock.json --sources-lock sources.lock.json \
+            --source-dir build/commons-audio
           python -m leximeet_dictionary verify-audio build/base/audio
           python -m leximeet_dictionary offline-audio \
             --db build/base/dictionary.sqlite --human-dir build/base/audio \

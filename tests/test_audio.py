@@ -5,6 +5,7 @@ import sqlite3
 import tempfile
 import hashlib
 import json
+import tarfile
 from contextlib import closing
 from pathlib import Path
 from unittest.mock import patch
@@ -56,6 +57,25 @@ class AudioTests(unittest.TestCase):
                 self.assertIsNone(cache_on_demand(db_path, "bank", Path(temp) / "cache"))
             with closing(sqlite3.connect(db_path)) as db:
                 self.assertEqual(db.execute("SELECT count(*) FROM entries").fetchone()[0], 1)
+
+    def test_checked_in_commons_snapshot_matches_audio_lock(self):
+        """固定来源快照必须与逐文件署名清单一致，CI 不依赖 Commons 高频请求。"""
+        root = Path(__file__).resolve().parents[1]
+        lock = json.loads((root / "audio.lock.json").read_text(encoding="utf-8"))
+        archive_path = root / "sources/commons-audio-v0.0.1.tar.gz"
+        checksum = (root / "sources/commons-audio-v0.0.1.sha256").read_text().split()[0]
+        self.assertEqual(hashlib.sha256(archive_path.read_bytes()).hexdigest(), checksum)
+        expected = {asset["path"]: asset for asset in lock["assets"]}
+        self.assertEqual(len(expected), 436)
+        with tarfile.open(archive_path, "r:gz") as archive:
+            members = archive.getmembers()
+            self.assertEqual({member.name for member in members}, set(expected))
+            for member in members:
+                self.assertTrue(member.isfile())
+                payload = archive.extractfile(member).read()
+                asset = expected[member.name]
+                self.assertEqual(len(payload), asset["bytes"])
+                self.assertEqual(hashlib.sha256(payload).hexdigest(), asset["sha256"])
 
     def test_locked_audio_reuses_only_matching_file_and_source(self):
         with tempfile.TemporaryDirectory() as temp:
