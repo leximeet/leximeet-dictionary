@@ -1,10 +1,18 @@
 <div align="center">
 
-# LexiMeet Dictionary · 词遇开放词典
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/brand/logo-dark.png">
+  <img src="assets/brand/logo-light.png" width="360" alt="词遇 LexiMeet 标志">
+</picture>
 
-**一份可核验、可离线发音、供桌面端与浏览器插件共用的英汉词典。**
-
-[词包接入](docs/CLIENT_CONTRACT.md) · [从源码构建](docs/BUILD.md) · [数据来源](DATA-LICENSE.md) · [更新记录](CHANGELOG.md)
+<h1>LexiMeet Dictionary · 词遇开放词典</h1>
+<p><strong>一份可核验、可离线发音、供桌面端与浏览器插件共用的英汉词典。</strong></p>
+<p>
+  <a href="docs/CLIENT_CONTRACT.md">词包接入</a> ·
+  <a href="docs/BUILD.md">从源码构建</a> ·
+  <a href="DATA-LICENSE.md">数据来源</a> ·
+  <a href="CHANGELOG.md">更新记录</a>
+</p>
 
 </div>
 

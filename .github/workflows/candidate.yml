@@ -1,28 +1,45 @@
-name: Dictionary 0.0.1 checks
+name: Build 0.0.1 dictionary draft
 
 on:
   workflow_dispatch:
 
+# 全量构建会上传到草稿 Release；只有维护者手动启动，不会在 push 时执行。
 permissions:
-  contents: read
+  contents: write
+
+concurrency:
+  group: dictionary-v0.0.1-draft
+  cancel-in-progress: false
 
 jobs:
   dictionary:
-    runs-on: ubuntu-latest
-    timeout-minutes: 240
+    runs-on: macos-15-intel
+    timeout-minutes: 360
     steps:
-      - uses: actions/checkout@v4
+      - name: 检出已推送的固定版本 tag
+        uses: actions/checkout@v4
         with:
+          ref: refs/tags/v0.0.1
           persist-credentials: false
-      - uses: actions/setup-python@v5
+      - name: 配置 Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: 初始化实际构建所需的固定子模块
-        run: git submodule update --init upstream/ecdict upstream/cmudict
-      - name: 下载固定版本的数据工件
+      - name: 安装并检查离线音频工具
         shell: bash
         run: |
           set -euo pipefail
+          brew install espeak-ng opus-tools
+          python - <<'PY'
+          from leximeet_dictionary.offline_audio import synthesis_lock
+          print(synthesis_lock())
+          PY
+          df -h .
+      - name: 初始化固定子模块并下载固定数据
+        shell: bash
+        run: |
+          set -euo pipefail
+          git submodule update --init upstream/ecdict upstream/cmudict
           mkdir -p downloads/open-dictionary/v2.0 downloads/english-wordnet/2025
           curl --fail --location --retry 4 --retry-all-errors --connect-timeout 30 \
             'https://github.com/ahpxex/open-dictionary/releases/download/v2.0/distribution.jsonl.gz' \
@@ -33,29 +50,77 @@ jobs:
           curl --fail --location --retry 4 --retry-all-errors --connect-timeout 30 \
             'https://en-word.net/static/english-wordnet-2025-json.zip' \
             --output downloads/english-wordnet/2025/english-wordnet-2025-json.zip
-      - name: 运行夹具测试
+      - name: 运行源码测试并构建词典底座
+        shell: bash
         run: |
+          set -euo pipefail
           python -m compileall -q leximeet_dictionary
           python -m unittest discover -s tests -v
-      - name: 全量构建并按 sources.lock.json 校验输入
-        run: |
           python -m leximeet_dictionary build \
             --distribution downloads/open-dictionary/v2.0/distribution.jsonl.gz \
             --audit downloads/open-dictionary/v2.0/audit.jsonl.gz \
             --ecdict upstream/ecdict/ecdict.csv \
             --cmudict upstream/cmudict/cmudict.dict \
             --wordnet downloads/english-wordnet/2025/english-wordnet-2025-json.zip \
-            --out build/v0.0.1
-          python -m leximeet_dictionary verify build/v0.0.1 --deep
-          python -m leximeet_dictionary report \
-            --db build/v0.0.1/dictionary.sqlite --out build/v0.0.1/qa
-      - name: 从固定音频清单重建并复核 Commons 许可
+            --out build/base
+          python -m leximeet_dictionary verify build/base --deep
+          df -h .
+      - name: 核权真人录音并生成全部核心词离线音频
+        shell: bash
         run: |
+          set -euo pipefail
           python -m leximeet_dictionary audio-pack-locked \
-            --db build/v0.0.1/dictionary.sqlite --out build/v0.0.1/audio \
+            --db build/base/dictionary.sqlite --out build/base/audio \
             --audio-lock audio.lock.json --sources-lock sources.lock.json
-          python -m leximeet_dictionary verify-audio build/v0.0.1/audio
-          python -m leximeet_dictionary audio-review-sheet \
-            --audio-manifest build/v0.0.1/audio/manifest.json \
-            --out build/v0.0.1/qa/audio-review-sample.csv
-      # 811,092 条合成录音与分片 Release 在发布机按 docs/BUILD.md 构建和深检；CI 不自动发布。
+          python -m leximeet_dictionary verify-audio build/base/audio
+          python -m leximeet_dictionary offline-audio \
+            --db build/base/dictionary.sqlite --human-dir build/base/audio \
+            --out build/audio-cache --workers 4
+          df -h .
+      - name: 构建和深度校验核心版、完整版
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m leximeet_dictionary release-build \
+            --source build/base --audio-cache build/audio-cache \
+            --out dist/v0.0.1 --shard-mib 256
+          python -m leximeet_dictionary release-verify dist/v0.0.1 --edition core --deep
+          python -m leximeet_dictionary release-verify dist/v0.0.1 --edition full --deep
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path('dist/v0.0.1')
+          manifest = json.loads((root / 'release.json').read_text())
+          expected = set(manifest['assets']) | {'release.json'}
+          actual = {path.name for path in root.iterdir() if path.is_file()}
+          assert actual == expected, (sorted(expected - actual), sorted(actual - expected))
+          assert set(manifest['editions']) == {'core', 'full'}
+          assert manifest['editions']['core']['entry_count'] == 117902
+          assert manifest['editions']['full']['entry_count'] == 811092
+          print(f'Release assets: {len(expected)} files')
+          PY
+          df -h .
+      - name: 上传经过校验的草稿 Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if gh release view v0.0.1 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo 'v0.0.1 Release 已存在；请先人工检查，流水线不会覆盖。' >&2
+            exit 1
+          fi
+          gh release create v0.0.1 dist/v0.0.1/* \
+            --repo "$GITHUB_REPOSITORY" --draft --verify-tag \
+            --title 'LexiMeet Dictionary 0.0.1' --notes-file CHANGELOG.md
+          gh release view v0.0.1 --repo "$GITHUB_REPOSITORY" \
+            --json isDraft,assets > /tmp/leximeet-release-view.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          remote = json.loads(Path('/tmp/leximeet-release-view.json').read_text())
+          expected = {path.name for path in Path('dist/v0.0.1').iterdir() if path.is_file()}
+          actual = {asset['name'] for asset in remote['assets']}
+          assert remote['isDraft'] and actual == expected, (remote['isDraft'], sorted(expected - actual), sorted(actual - expected))
+          print(f'Draft Release uploaded: {len(actual)} assets')
+          PY

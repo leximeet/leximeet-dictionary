@@ -1,6 +1,6 @@
 # 从源码构建与核验 0.0.1
 
-构建脚本需要 Python 3.11+；批量音频还需要与 [audio-tools.lock.json](../audio-tools.lock.json) 一致的 eSpeak NG 1.52.0、opus-tools 0.2 / libopus 1.6.1。所有上游输入由 [sources.lock.json](../sources.lock.json) 固定哈希。命令在仓库根目录执行；`build/` 和 `dist/` 被 Git 忽略。构建器不会覆盖已有输出目录。
+构建脚本需要 Python 3.11+；批量音频还需要与 [audio-tools.lock.json](../audio-tools.lock.json) 一致的 eSpeak NG 1.52.0、opus-tools 0.2 / libopus 1.6.1。所有上游输入由 [sources.lock.json](../sources.lock.json) 固定哈希。本页的本地命令是故障排查和离线复核用；正式发版可交给手动 GitHub Action。命令在仓库根目录执行；`build/` 和 `dist/` 被 Git 忽略。构建器不会覆盖已有输出目录。
 
 ## 1. 固定词典底座
 
@@ -60,15 +60,17 @@ python3 -m unittest discover -s tests -v
 
 `dist/v0.0.1/release.json` 列出两个版本及每个下载资产的精确字节数与 SHA-256。完整版复用核心音频索引与分片，另外下载 `full.dictionary.sqlite.part-*`；客户端按 `sqlite.parts` 的顺序重组并核对整个 SQLite 哈希。`release-verify --deep` 逐条检查 JSONL、核心词音频、分片字节与重组后的 SQLite。抽听时可用 `release-audio --edition core --entry-id <词条 ID> --out /tmp/sample.ogg dist/v0.0.1` 从分片提取独立文件。
 
-本仓库没有自动推送、打 tag、创建 PR 或发布 Release 的步骤。维护者检查数据与音质后自行上传 `release.json` 及清单中全部资产；端侧按 [客户端接入协议](CLIENT_CONTRACT.md) 下载和安装。GitHub Action 负责源码测试与固定词典数据校验；全量音频和 Release 的逐片校验在发布机执行。
+## 4. 在 GitHub Actions 构建并发布
 
-维护者确认本地 `main`、词包与清单后，可自行发布：
+本地 `main` 上已经准备好 `v0.0.1` tag 后，由维护者推送代码和 tag：
 
 ```bash
 git push origin main
-git tag -a v0.0.1 -m 'LexiMeet Dictionary 0.0.1'
 git push origin v0.0.1
-gh release create v0.0.1 dist/v0.0.1/* --verify-tag --title 'LexiMeet Dictionary 0.0.1' --notes-file CHANGELOG.md
 ```
 
-`dist/v0.0.1/` 的文件是平铺的 Release 资产，`release.json` 也要一同上传；发布后不要只上传核心版而遗漏完整版分片。GitHub 的[单个 Release 资产上限为 2 GiB](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases)，本项目按不超过 256 MiB 切分大文件。上述 `gh release create` 用法见 [GitHub CLI 文档](https://cli.github.com/manual/gh_release_create)。
+等待 `Dictionary tests` 通过，再在 GitHub 仓库的 **Actions → Build 0.0.1 dictionary draft → Run workflow** 中选 `main` 手动运行。工作流从远端 `v0.0.1` tag 检出源码，下载并按哈希验证固定数据，核权 436 条真人录音，生成所有核心词音频，构建 `core` 和 `full`，深检两个词包，最后上传 `release.json` 与全部分片到 **草稿 Release**。它不会推送代码、打 tag 或正式发布。维护者检查运行日志、草稿资产与抽样音质后，在 GitHub 页面发布草稿。正式 Release 出现前，其他项目不要依赖该下载地址。
+
+这条流水线使用标准 `macos-15-intel` 运行器，受 GitHub 单次任务 6 小时和运行器磁盘限制；音频工具版本若与 `audio-tools.lock.json` 不同会立即停止，不会悄悄换声线。**流水线配置已写入仓库，远端实际运行要等维护者推送后才能验证。**失败时可以用本页 1–3 节在本地构建并复核，排查原因后重新运行；已有草稿 Release 不会被自动覆盖。
+
+不要把约 1.74 GB 的完整版放进 Actions artifact：GitHub Free 组织的 artifact 存储额度为 500 MB，而 [Release](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases) 单文件上限 2 GiB、总量没有相同限制。本项目按不超过 256 MiB 切分大文件。正式发布后，端侧按 [客户端接入协议](CLIENT_CONTRACT.md) 获取固定版本的 `release.json`，以其中的哈希和大小为准。需要手动上传本地已核验词包时，可参考 [GitHub CLI `gh release create`](https://cli.github.com/manual/gh_release_create)；这只是流水线失败时的备选路径。
