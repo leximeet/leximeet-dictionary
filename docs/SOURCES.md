@@ -60,7 +60,7 @@ Wiktextract 的 sounds 中 ipa 与 audio 可以在同项，也可能分项；数
 
 原提案“ECDICT + Wiktextract + Open English WordNet + open-dictionary + DictionaryByGPT4，再加 qwerty 标签”覆盖的**功能方向**是合理的，却不是当前最适合直接加工发布的来源清单。
 
-建议首批输入为 **ECDICT + 固定 English Wiktionary 快照/Wiktextract + open-dictionary 发布工件 + Open English WordNet 正式版 + CMUdict**。增加 CMUdict，是为了在 ECDICT 旧音标和 Wiktionary IPA 缺口之外有可独立核验的美式音素来源。open-dictionary 在同源词义冲突中视为 Wiktionary 的策展层，不计独立票。DictionaryByGPT4 与 qwerty 暂作研究/人工验证来源，不进入默认包。音频另作许可审查。
+建议首版离线词卡以 **ECDICT + open-dictionary v2.0 发布工件** 建立可用基线；取得固定 English Wiktionary 快照后再用 Wiktextract 补原始义项、标签与完整发音候选。**Open English WordNet 2025 core 与 CMUdict** 作为分阶段启用的语义和美式音素模块。open-dictionary 在同源词义冲突中视为 Wiktionary 的策展层，不计独立票。DictionaryByGPT4 与 qwerty 暂作研究/人工验证来源，不进入默认包。音频另作许可审查。仓库与候选数据修订见 [版本锁定](SOURCE_LOCK.md)，具体实施见 [任务文档](TASKS.md)。
 
 还值得观察：
 

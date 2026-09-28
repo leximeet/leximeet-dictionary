@@ -1,0 +1,116 @@
+{
+  "schemaVersion": "leximeet.sources.v0",
+  "asOf": "2026-09-28",
+  "repositories": [
+    {
+      "id": "ecdict",
+      "url": "https://github.com/skywind3000/ECDICT.git",
+      "commit": "bc015ed2e24a7abef49fc6dbbb7fe32c1dadaf8b",
+      "role": "submodule"
+    },
+    {
+      "id": "wiktextract",
+      "url": "https://github.com/tatuylonen/wiktextract.git",
+      "commit": "1a05e46f9efbccda6a2b2f8e21b30a9c0c46513a",
+      "role": "submodule"
+    },
+    {
+      "id": "open-dictionary",
+      "url": "https://github.com/ahpxex/open-dictionary.git",
+      "commit": "647df7a33e211a03014b6647f7832b0b183911b3",
+      "role": "submodule"
+    },
+    {
+      "id": "english-wordnet",
+      "url": "https://github.com/globalwordnet/english-wordnet.git",
+      "commit": "bff3181fe5c810dcd157cba0eed60322a6e0aaed",
+      "role": "submodule"
+    },
+    {
+      "id": "cmudict",
+      "url": "https://github.com/cmusphinx/cmudict.git",
+      "commit": "74790861f652b15e4ac49015a90074ad62a27690",
+      "role": "submodule"
+    },
+    {
+      "id": "dictionary-by-gpt4",
+      "url": "https://github.com/Ceelog/DictionaryByGPT4.git",
+      "commit": "8c9b050b653108145a94a559c816e0e499ef1627",
+      "role": "research-only"
+    },
+    {
+      "id": "qwerty-learner",
+      "url": "https://github.com/RealKai42/qwerty-learner.git",
+      "commit": "122acd90b4079dd040c28a14356447f6553cff83",
+      "role": "research-only"
+    },
+    {
+      "id": "aictionary",
+      "url": "https://github.com/ahpxex/Aictionary.git",
+      "commit": "00eb58cdba6626bbbd8d35ff206ed28ed67553fb",
+      "role": "behavior-reference-only"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": "ecdict-csv",
+      "path": "upstream/ecdict/ecdict.csv",
+      "sha256": "1a6947e04785db63613a92e14903cdae7954f7e84860b10e68e5c7cbb3f9c3cf",
+      "hashEvidence": "local",
+      "redistributionReview": "pending"
+    },
+    {
+      "id": "cmudict-dict",
+      "path": "upstream/cmudict/cmudict.dict",
+      "sha256": "81917843c7f44ce2b094ac63873c2c7a4cf802040792c455ba3ca406891c3d22",
+      "hashEvidence": "local",
+      "redistributionReview": "pending"
+    },
+    {
+      "id": "open-dictionary-v2-distribution-jsonl-gz",
+      "release": "v2.0",
+      "releaseCommit": "53189a610287efb9ce627f9ab93409c639acdc47",
+      "url": "https://github.com/ahpxex/open-dictionary/releases/download/v2.0/distribution.jsonl.gz",
+      "sha256": null,
+      "hashEvidence": "not-downloaded",
+      "redistributionReview": "pending"
+    },
+    {
+      "id": "open-dictionary-v2-audit-jsonl-gz",
+      "release": "v2.0",
+      "url": "https://github.com/ahpxex/open-dictionary/releases/download/v2.0/audit.jsonl.gz",
+      "sha256": null,
+      "hashEvidence": "not-downloaded",
+      "redistributionReview": "pending"
+    },
+    {
+      "id": "open-dictionary-v2-wiktextract-raw",
+      "snapshotDate": "2025-10-23",
+      "sha256": "dcdf2c2d5941a116d9104e3e3f118d3cc58c8488eba3d5ffee461947c3aa05a9",
+      "hashEvidence": "upstream-release-not-locally-verified",
+      "redistributionReview": "pending"
+    },
+    {
+      "id": "english-wordnet-2025-core",
+      "edition": "2025",
+      "url": "https://en-word.net/static/english-wordnet-2025-json.zip",
+      "sha256": null,
+      "hashEvidence": "not-downloaded",
+      "redistributionReview": "pending"
+    },
+    {
+      "id": "dictionary-by-gpt4-jsonl",
+      "referencePath": "../../../reference/resource/DictionaryByGPT4/gptwords.json",
+      "sha256": "51bc73affec742690d9683f282f8944e7a191e94592ca9c7c2a317e5f92fb5d0",
+      "hashEvidence": "local",
+      "redistributionReview": "research-only"
+    },
+    {
+      "id": "qwerty-dictionary-index",
+      "referencePath": "../../../reference/resource/qwerty-learner/src/resources/dictionary.ts",
+      "sha256": "fc3b33cf8c728a69b79e8935a6cfb1aa33f046158e05167d34e288d535db8982",
+      "hashEvidence": "local",
+      "redistributionReview": "research-only"
+    }
+  ]
+}
