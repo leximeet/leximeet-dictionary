@@ -2,6 +2,8 @@
 
 本页以 Python 3.11+ 标准库运行；构建器没有第三方 Python 依赖。代码在仓库根目录执行。生成目录 `build/` 和下载目录 `downloads/` 已忽略，不提交 Git。0.0.1 **发行候选**使用同一份只读词典核心，提供 `edition.no-audio.json` 和 `edition.with-audio.json` 两个安装清单：后者在前者基础上安装经过逐文件核权的高频录音。其余词继续按用户点击朗读时请求与缓存，断网查词不受影响。
 
+无音频版朗读的 Commons 在线接口、设备 TTS、Azure、有道和其他候选来源的调用方式及缓存许可，见[音频提供方与按需缓存](AUDIO_PROVIDERS.md)。
+
 ## 固定输入
 
 先执行 `git submodule update --init`。五个输入的准确 SHA-256、字节数、URL 和版本见仓库根目录 `sources.lock.json`；构建器会逐文件核对。尤其注意：`upstream/open-dictionary` 的 Git commit **不是** v2.0 Release 数据文件；`upstream/wiktextract` 也只是提取工具，不是英语 dump 本身。
