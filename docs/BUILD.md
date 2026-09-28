@@ -61,3 +61,14 @@ python3 -m unittest discover -s tests -v
 `dist/v0.0.1/release.json` 列出两个版本及每个下载资产的精确字节数与 SHA-256。完整版复用核心音频索引与分片，另外下载 `full.dictionary.sqlite.part-*`；客户端按 `sqlite.parts` 的顺序重组并核对整个 SQLite 哈希。`release-verify --deep` 逐条检查 JSONL、核心词音频、分片字节与重组后的 SQLite。抽听时可用 `release-audio --edition core --entry-id <词条 ID> --out /tmp/sample.ogg dist/v0.0.1` 从分片提取独立文件。
 
 本仓库没有自动推送、打 tag、创建 PR 或发布 Release 的步骤。维护者检查数据与音质后自行上传 `release.json` 及清单中全部资产；端侧按 [客户端接入协议](CLIENT_CONTRACT.md) 下载和安装。GitHub Action 负责源码测试与固定词典数据校验；全量音频和 Release 的逐片校验在发布机执行。
+
+维护者确认本地 `main`、词包与清单后，可自行发布：
+
+```bash
+git push origin main
+git tag -a v0.0.1 -m 'LexiMeet Dictionary 0.0.1'
+git push origin v0.0.1
+gh release create v0.0.1 dist/v0.0.1/* --verify-tag --title 'LexiMeet Dictionary 0.0.1' --notes-file CHANGELOG.md
+```
+
+`dist/v0.0.1/` 的文件是平铺的 Release 资产，`release.json` 也要一同上传；发布后不要只上传核心版而遗漏完整版分片。GitHub 的[单个 Release 资产上限为 2 GiB](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases)，本项目按不超过 256 MiB 切分大文件。上述 `gh release create` 用法见 [GitHub CLI 文档](https://cli.github.com/manual/gh_release_create)。
