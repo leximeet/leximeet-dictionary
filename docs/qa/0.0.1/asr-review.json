@@ -1,0 +1,246 @@
+{
+  "model": "Systran/faster-whisper-base.en",
+  "scope": "ASR auxiliary only; isolated sub-second words may misrecognize homophones",
+  "records": [
+    {
+      "headword": "be",
+      "title": "File:En-us-be.ogg",
+      "duration_seconds": 0.311,
+      "asr_transcript": "B."
+    },
+    {
+      "headword": "his",
+      "title": "File:En-us-his.ogg",
+      "duration_seconds": 0.708,
+      "asr_transcript": "his"
+    },
+    {
+      "headword": "get",
+      "title": "File:En-us-get.ogg",
+      "duration_seconds": 0.755,
+      "asr_transcript": "Get."
+    },
+    {
+      "headword": "see",
+      "title": "File:En-us-see.ogg",
+      "duration_seconds": 0.836,
+      "asr_transcript": "C"
+    },
+    {
+      "headword": "tell",
+      "title": "File:En-us-tell.ogg",
+      "duration_seconds": 0.569,
+      "asr_transcript": "Tell."
+    },
+    {
+      "headword": "back",
+      "title": "File:En-us-back.ogg",
+      "duration_seconds": 0.615,
+      "asr_transcript": "back."
+    },
+    {
+      "headword": "life",
+      "title": "File:En-us-life.ogg",
+      "duration_seconds": 0.592,
+      "asr_transcript": "Nice."
+    },
+    {
+      "headword": "world",
+      "title": "File:En-us-world.oga",
+      "duration_seconds": 0.66,
+      "asr_transcript": "world"
+    },
+    {
+      "headword": "erm",
+      "title": "File:En-us-erm.ogg",
+      "duration_seconds": 0.999,
+      "asr_transcript": "Um"
+    },
+    {
+      "headword": "high",
+      "title": "File:En-us-high.ogg",
+      "duration_seconds": 0.569,
+      "asr_transcript": "Hi."
+    },
+    {
+      "headword": "seem",
+      "title": "File:En-us-seem.ogg",
+      "duration_seconds": 1.602,
+      "asr_transcript": "seam"
+    },
+    {
+      "headword": "each",
+      "title": "File:En-us-each.ogg",
+      "duration_seconds": 0.557,
+      "asr_transcript": "each."
+    },
+    {
+      "headword": "number",
+      "title": "File:En-us-number.ogg",
+      "duration_seconds": 0.615,
+      "asr_transcript": "Number."
+    },
+    {
+      "headword": "home",
+      "title": "File:En-us-home.ogg",
+      "duration_seconds": 0.778,
+      "asr_transcript": "home"
+    },
+    {
+      "headword": "issue",
+      "title": "File:En-uk-issue.ogg",
+      "duration_seconds": 3.181,
+      "asr_transcript": "issue or issue."
+    },
+    {
+      "headword": "side",
+      "title": "File:En-us-side.ogg",
+      "duration_seconds": 0.673,
+      "asr_transcript": "side."
+    },
+    {
+      "headword": "line",
+      "title": "File:En-us-line.ogg",
+      "duration_seconds": 0.859,
+      "asr_transcript": "line."
+    },
+    {
+      "headword": "once",
+      "title": "File:En-us-once.ogg",
+      "duration_seconds": 0.755,
+      "asr_transcript": "Once."
+    },
+    {
+      "headword": "idea",
+      "title": "File:En-us-idea.ogg",
+      "duration_seconds": 0.72,
+      "asr_transcript": "Idea"
+    },
+    {
+      "headword": "follow",
+      "title": "File:En-us-follow.ogg",
+      "duration_seconds": 0.72,
+      "asr_transcript": "Follow."
+    },
+    {
+      "headword": "within",
+      "title": "File:En-us-within.ogg",
+      "duration_seconds": 0.801,
+      "asr_transcript": "within."
+    },
+    {
+      "headword": "walk",
+      "title": "File:En-uk-walk.ogg",
+      "duration_seconds": 0.926,
+      "asr_transcript": "walk"
+    },
+    {
+      "headword": "Britain",
+      "title": "File:En-uk-Britain.ogg",
+      "duration_seconds": 0.743,
+      "asr_transcript": "Britain."
+    },
+    {
+      "headword": "remember",
+      "title": "File:En-us-remember.ogg",
+      "duration_seconds": 0.778,
+      "asr_transcript": "Remember"
+    },
+    {
+      "headword": "market",
+      "title": "File:En-us-market.ogg",
+      "duration_seconds": 0.72,
+      "asr_transcript": "Market"
+    },
+    {
+      "headword": "England",
+      "title": "File:En-us-England.ogg",
+      "duration_seconds": 1.509,
+      "asr_transcript": "England."
+    },
+    {
+      "headword": "local",
+      "title": "File:En-us-local.ogg",
+      "duration_seconds": 0.95,
+      "asr_transcript": "Local."
+    },
+    {
+      "headword": "major",
+      "title": "File:En-us-major.ogg",
+      "duration_seconds": 0.882,
+      "asr_transcript": "major"
+    },
+    {
+      "headword": "development",
+      "title": "File:En-us-development.ogg",
+      "duration_seconds": 0.975,
+      "asr_transcript": "development."
+    },
+    {
+      "headword": "role",
+      "title": "File:En-us-role.ogg",
+      "duration_seconds": 1.05,
+      "asr_transcript": "roll"
+    },
+    {
+      "headword": "economic",
+      "title": "File:En-us-economic.ogg",
+      "duration_seconds": 0.894,
+      "asr_transcript": "economic."
+    },
+    {
+      "headword": "according",
+      "title": "File:En-us-according.ogg",
+      "duration_seconds": 0.813,
+      "asr_transcript": "According"
+    },
+    {
+      "headword": "value",
+      "title": "File:En-us-value.ogg",
+      "duration_seconds": 0.72,
+      "asr_transcript": "value"
+    },
+    {
+      "headword": "action",
+      "title": "File:En-us-action.ogg",
+      "duration_seconds": 0.627,
+      "asr_transcript": "Action."
+    },
+    {
+      "headword": "director",
+      "title": "File:En-us-director.ogg",
+      "duration_seconds": 2.832,
+      "asr_transcript": "Director"
+    },
+    {
+      "headword": "official",
+      "title": "File:En-us-official.ogg",
+      "duration_seconds": 0.836,
+      "asr_transcript": "official."
+    },
+    {
+      "headword": "cost",
+      "title": "File:En-us-cost.ogg",
+      "duration_seconds": 0.708,
+      "asr_transcript": "Cost"
+    },
+    {
+      "headword": "wall",
+      "title": "File:En-us-wall.ogg",
+      "duration_seconds": 0.673,
+      "asr_transcript": "Well."
+    },
+    {
+      "headword": "red",
+      "title": "File:En-us-red.ogg",
+      "duration_seconds": 0.569,
+      "asr_transcript": "Red"
+    },
+    {
+      "headword": "opportunity",
+      "title": "File:En-us-opportunity.ogg",
+      "duration_seconds": 1.022,
+      "asr_transcript": "Opportunity."
+    }
+  ]
+}

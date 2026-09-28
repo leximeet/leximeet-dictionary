@@ -35,7 +35,7 @@
 
 | 本地文件 | 内容 | 当前大小或校验 |
 | --- | --- | --- |
-| [全量词条与释义 Markdown](../dist/final/leximeet-dictionary-0.0.1-details.md) | 811,092 行词条，逐义项英文原义/中文短释/学习解释，以及独立的 ECDICT 词条级中英文回退；一行一个 `entry_id` | 193,973,684 bytes；SHA-256 `97d5451ae5622b9ac2545d86bf2869f81fbfc98925fc38c967dabc308e51abb9` |
+| `dist/final/leximeet-dictionary-0.0.1-details.md`（本地生成件） | 811,092 行词条，逐义项英文原义/中文短释/学习解释，以及独立的 ECDICT 词条级中英文回退；一行一个 `entry_id` | 193,973,684 bytes；SHA-256 `97d5451ae5622b9ac2545d86bf2869f81fbfc98925fc38c967dabc308e51abb9` |
 | `dist/final/leximeet-dictionary-0.0.1-core.tar.gz` | 插件可导入的 5,000 词离线核心 | 17,963,726 bytes；外层哈希见 `release-candidate.json` |
 | `dist/final/leximeet-dictionary-0.0.1-no-audio.tar.gz` | 完整 SQLite/JSONL，不附 OGG | 433,452,931 bytes |
 | `dist/final/leximeet-dictionary-0.0.1-with-audio.tar.gz` | 相同完整词典，加 436 条录音 | 437,918,827 bytes |

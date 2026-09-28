@@ -4,7 +4,7 @@
 
 ## 210 条词义样本
 
-从 `qa/review-sample.csv` 逐条按 `entry_id` 重读只读 SQLite，对照词头、来源层、义项数、前两条英文原义与中文学习解释、ECDICT 中文回退，并核对义项 `display_order` 连续、领域/用法标签属于义项、考试标签属于词条。`tools/audit_samples.py` 将结果写到 `qa/agent-meaning-review.csv` 和 `qa/agent-review-summary.json`。**210/210 条在这些源字段与结构检查上通过**；这只证明工作表确实对应当前词包，不证明释义本身正确。
+从 `qa/review-sample.csv` 逐条按 `entry_id` 重读只读 SQLite，对照词头、来源层、义项数、前两条英文原义与中文学习解释、ECDICT 中文回退，并核对义项 `display_order` 连续、领域/用法标签属于义项、考试标签属于词条。`tools/audit_samples.py` 将结果写到 `build/v0.0.1-final/qa/`，并把可审阅的小文件固定到 [词义复核表](qa/0.0.1/agent-meaning-review.csv) 与 [汇总](qa/0.0.1/agent-review-summary.json)。**210/210 条在这些源字段与结构检查上通过**；这只证明工作表确实对应当前词包，不证明释义本身正确。
 
 | 抽样层次 | 条数 | 本轮能判断什么 |
 | --- | ---: | --- |
@@ -30,9 +30,9 @@
 
 ## 40 条音频样本
 
-从 `qa/audio-review-sample.csv` 逐条打开候选目录的 OGG 文件，重算 SHA-256，核 OGG 容器标记、文件名与词头、作者/许可/链接字段及 Commons 文件页；**40/40 条元数据与本地字节一致**。此前 `verify-audio` 对全部 436 条离线录音检查哈希和署名；固定清单还记录了逐文件的 Commons 在线元数据复核。结果写在 `qa/agent-audio-review.csv`。文件名匹配与许可字段存在，不能证明录音声波确实说出了目标词或发音自然。
+从 `qa/audio-review-sample.csv` 逐条打开候选目录的 OGG 文件，重算 SHA-256，核 OGG 容器标记、文件名与词头、作者/许可/链接字段及 Commons 文件页；**40/40 条元数据与本地字节一致**。此前 `verify-audio` 对全部 436 条离线录音检查哈希和署名；固定清单还记录了逐文件的 Commons 在线元数据复核。结果保存在[音频复核表](qa/0.0.1/agent-audio-review.csv)。文件名匹配与许可字段存在，不能证明录音声波确实说出了目标词或发音自然。
 
-为推进听辨，本轮把 40 条录音在本机交给 `Systran/faster-whisper-base.en` 做**离线辅助转写**，原始输出与时长在 `qa/asr-review.json`。多数录音只有约 0.3–1 秒：`be→B`、`see→C`、`high→Hi`、`seem→seam`、`role→roll` 等是同音/近音或短音频识别歧义；`erm→Um` 也可能是口语音近而不是源文件错误。base.en 把 `life`、`wall` 误识别成 `Nice`、`Well`；第二个 `Systran/faster-whisper-small.en` 模型对这两条分别转写为 `Life`、`wall`，九条交叉检查的原始结果另存 `qa/asr-crosscheck.json`。这降低了“文件明显放错词”的疑虑，仍不是真人听辨。`issue→issue or issue` 可能包含两个读音，不能当成两个词。ASR 没有更改任何录音资产或把 40 行的 `content_listening` 改为通过。
+为推进听辨，本轮把 40 条录音在本机交给 `Systran/faster-whisper-base.en` 做**离线辅助转写**，[原始输出与时长](qa/0.0.1/asr-review.json)已保存。多数录音只有约 0.3–1 秒：`be→B`、`see→C`、`high→Hi`、`seem→seam`、`role→roll` 等是同音/近音或短音频识别歧义；`erm→Um` 也可能是口语音近而不是源文件错误。base.en 把 `life`、`wall` 误识别成 `Nice`、`Well`；第二个 `Systran/faster-whisper-small.en` 模型对这两条分别转写为 `Life`、`wall`，[九条交叉检查](qa/0.0.1/asr-crosscheck.json)另存。这降低了“文件明显放错词”的疑虑，仍不是真人听辨。`issue→issue or issue` 可能包含两个读音，不能当成两个词。ASR 没有更改任何录音资产或把 40 行的 `content_listening` 改为通过。
 
 ## 使用结论与剩余动作
 

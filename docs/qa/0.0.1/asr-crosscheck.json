@@ -1,0 +1,51 @@
+{
+  "model": "Systran/faster-whisper-small.en",
+  "scope": "cross-check of 9 ambiguous base.en transcripts; not human listening",
+  "records": [
+    {
+      "headword": "be",
+      "asr_transcript": "B.",
+      "duration_seconds": 0.311
+    },
+    {
+      "headword": "see",
+      "asr_transcript": "c",
+      "duration_seconds": 0.836
+    },
+    {
+      "headword": "life",
+      "asr_transcript": "Life.",
+      "duration_seconds": 0.592
+    },
+    {
+      "headword": "erm",
+      "asr_transcript": "Um...",
+      "duration_seconds": 0.999
+    },
+    {
+      "headword": "high",
+      "asr_transcript": "Hi.",
+      "duration_seconds": 0.569
+    },
+    {
+      "headword": "seem",
+      "asr_transcript": "Seem",
+      "duration_seconds": 1.602
+    },
+    {
+      "headword": "issue",
+      "asr_transcript": "s-u or issue",
+      "duration_seconds": 3.181
+    },
+    {
+      "headword": "role",
+      "asr_transcript": "Roll",
+      "duration_seconds": 1.05
+    },
+    {
+      "headword": "wall",
+      "asr_transcript": "wall.",
+      "duration_seconds": 0.673
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "audio": {
+    "file_and_metadata_consistent": 40,
+    "rows": 40
+  },
+  "meaning": {
+    "curated": 107,
+    "ecdict-fallback": 103,
+    "editorial_concern": 9,
+    "entry_level_fallback_only": 99,
+    "rows": 210,
+    "source_fields_consistent": 210
+  },
+  "scope": "结构与原字段一致性及抽样预览阅读；不等于独立词义或真人听辨通过"
+}
