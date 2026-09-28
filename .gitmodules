@@ -1,0 +1,15 @@
+[submodule "upstream/ecdict"]
+	path = upstream/ecdict
+	url = https://github.com/skywind3000/ECDICT.git
+[submodule "upstream/cmudict"]
+	path = upstream/cmudict
+	url = https://github.com/cmusphinx/cmudict.git
+[submodule "upstream/wiktextract"]
+	path = upstream/wiktextract
+	url = https://github.com/tatuylonen/wiktextract.git
+[submodule "upstream/english-wordnet"]
+	path = upstream/english-wordnet
+	url = https://github.com/globalwordnet/english-wordnet.git
+[submodule "upstream/open-dictionary"]
+	path = upstream/open-dictionary
+	url = https://github.com/ahpxex/open-dictionary.git

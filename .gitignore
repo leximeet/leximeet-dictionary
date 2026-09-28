@@ -1,0 +1,11 @@
+# 下载快照、加工缓存和生成词包由发布清单管理，不直接提交到源码仓库。
+downloads/
+.cache/
+build/
+dist/
+audio-cache/
+
+# 本地运行环境和系统文件。
+.venv/
+__pycache__/
+.DS_Store
