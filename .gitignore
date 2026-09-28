@@ -4,6 +4,7 @@ downloads/
 build/
 dist
 audio-cache
+CHAT.md
 
 # 本地运行环境和系统文件。
 .venv/

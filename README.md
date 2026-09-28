@@ -4,7 +4,7 @@
 
 > 0.0.1 状态：构建器、三种独立词包（浏览器核心、完整无音频、完整带发音）、固定录音清单、手动候选 CI、WordNet 概念表和 Commons 按需缓存工具已实现。最新源码已完成可重复的全量构建、深度数据校验和隔离目录安装抽验；**分层词义人工判断、音频听辨/署名抽查、远端 CI 首跑和原生客户端接入仍未完成**，所以目前只提供本地发布候选，不是正式 Release。[构建与使用](docs/BUILD.md)说明命令，[客户端契约](docs/CLIENT_CONTRACT.md)说明接入规则，[维护者交接清单](docs/RELEASE_CHECKLIST.md)列出正式发布门禁，[数据许可](DATA-LICENSE.md)说明来源与权利通知入口。
 
-无音频版按 Aictionary、qwerty-learner、Read Frog、Pot 的实现经验组织按需朗读；提供方比较和缓存规则见[音频提供方与按需缓存](docs/AUDIO_PROVIDERS.md)。桌面端和插件端如何取得词包见[分发与接入方案](docs/DISTRIBUTION.md)。
+无音频版按 Aictionary、qwerty-learner、Read Frog、Pot 的实现经验组织按需朗读；提供方比较和缓存规则见[音频提供方与按需缓存](docs/AUDIO_PROVIDERS.md)。桌面端和插件端如何取得词包见[分发与接入方案](docs/DISTRIBUTION.md)。[当前来源贡献、与 open-dictionary/ECDICT 的对比及全量词条表](docs/DICTIONARY_OVERVIEW.md)集中记录本地实测。
 
 ## 为什么不直接把五份词典拼成一个 JSON
 
