@@ -15,10 +15,12 @@
 ### 文档补充
 
 - 核对 Commons、Web Speech API、微软 Azure AI Speech、有道智云和 Free Dictionary API 的官方接口、价格及缓存条款，补充无音频版按需朗读的接入文档；说明 ECDICT 仓库开源与第三方数据权利链的区别。
+- 记录维护者选定的 ECDICT 署名及权利通知处理方式；以固定提交分析 Aictionary、qwerty-learner、Read Frog、Pot 的按需朗读实现；明确多端以版本化 Release 资产消费词包、源码开发才使用 Git 引用。
+- 在重建仓库的新 `main` 上迁移词典历史；将新构建候选标记为 `candidate-needs-human-review`，把现有测试工作流限制为只读权限，并记录独立核心资产和候选构建流水线任务。
 
 ### 已知发布门禁
 
-- ECDICT 历史字段权利、200 条人工语义复核及桌面/插件真实安装、离线、升级和回滚尚未验收。当前清单保持 `candidate-needs-license-and-human-review`。
+- 200 条人工语义复核、音频抽查、桌面/插件真实安装与更新回滚尚未验收；策略调整后全量归档也尚未重建。旧归档仍为 `candidate-needs-license-and-human-review`，新源码生成的候选为 `candidate-needs-human-review`。
 
 ## 初始设计基线
 

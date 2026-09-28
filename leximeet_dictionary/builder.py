@@ -374,7 +374,8 @@ def build(paths: dict[str, Path], lock_path: Path, out: Path, core_size: int = 5
         "outputs": {name: {"bytes": size, "sha256": sha} for name, (size, sha) in files.items()},
         "core_limit": core_size,
         "data_license": "CC BY-SA 4.0 for Wiktionary/open-dictionary derived content; see DATA-LICENSE.md",
-        "release_status": "candidate-needs-license-and-human-review",
+        # ECDICT 采用署名与权利通知处理策略；候选状态继续等待人工词义和端侧验收。
+        "release_status": "candidate-needs-human-review",
     }
     (out / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, sort_keys=True, indent=2) + "\n", encoding="utf-8")
     manifest_size, manifest_sha = file_hash(out / "manifest.json")

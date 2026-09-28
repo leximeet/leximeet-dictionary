@@ -23,7 +23,7 @@
 | qwerty-learner | 词表目录、分类 UX 和导入流程参考 | 其词表大量来自第三方；当前没有充分证据支持把词表、译文、音频或大规模成员关系放入公开词包 |
 | Aictionary | 离线包下载及独立 TTS 提供方的产品参考 | 不作为词典来源；其默认 Edge TTS 路径不等于词遇获得稳定 API 或音频再分发许可 |
 
-open-dictionary v2.0 的分发契约含义项 labels、topics、priority；这三者分别对应用法/领域/展示排序，不能等同考试词表。它也已经提供 memory_hook 与 study_notes，因此 DictionaryByGPT4 需要证明相对增量，不能因“有助记”就整包叠加。其发行数据将 Wiktionary 文本与生成解释一并按 CC BY-SA 4.0 发布。[发行说明](https://github.com/ahpxex/open-dictionary/releases/tag/v2.0)、[导出契约](../upstream/open-dictionary/docs/export_contracts.md)、[数据许可](../upstream/open-dictionary/LICENSE-DATA.md)是本轮依据。[Wiktextract 字段说明](../upstream/wiktextract/README.md)证实 sense.tags、sense.topics、sense.categories 与 sounds 的标签位置不同。
+open-dictionary v2.0 的分发契约含义项 labels、topics、priority；这三者分别对应用法/领域/展示排序，不能等同考试词表。它也已经提供 memory_hook 与 study_notes，因此 DictionaryByGPT4 需要证明相对增量，不能因“有助记”就整包叠加。其发行数据将 Wiktionary 文本与生成解释一并按 CC BY-SA 4.0 发布。[发行说明](https://github.com/ahpxex/open-dictionary/releases/tag/v2.0)、[导出契约](https://github.com/ahpxex/open-dictionary/blob/647df7a33e211a03014b6647f7832b0b183911b3/docs/export_contracts.md)、[数据许可](https://github.com/ahpxex/open-dictionary/blob/647df7a33e211a03014b6647f7832b0b183911b3/LICENSE-DATA.md)是本轮依据。[Wiktextract 字段说明](https://github.com/tatuylonen/wiktextract/blob/1a05e46f9efbccda6a2b2f8e21b30a9c0c46513a/README.md)证实 sense.tags、sense.topics、sense.categories 与 sounds 的标签位置不同。
 
 ## 3. 逻辑模型：把不同问题分开
 

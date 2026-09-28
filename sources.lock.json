@@ -57,9 +57,9 @@
       "path": "upstream/ecdict/ecdict.csv",
       "sha256": "1a6947e04785db63613a92e14903cdae7954f7e84860b10e68e5c7cbb3f9c3cf",
       "bytes": 65933428,
-      "license": "ECDICT repository MIT; per-field provenance review pending",
+      "license": "ECDICT repository MIT; attribution and rights-notice response documented in DATA-LICENSE.md",
       "hashEvidence": "local",
-      "redistributionReview": "pending"
+      "redistributionReview": "attribution-and-takedown-policy"
     },
     {
       "id": "cmudict-dict",

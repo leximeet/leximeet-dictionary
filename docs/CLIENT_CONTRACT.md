@@ -6,7 +6,7 @@
 
 客户端只选择一种 `edition.*.json`。先解包到临时目录，校验 edition 引用的 `manifest.json` SHA-256，再逐项校验 `outputs` 字节数和 SHA-256；带发音版还要校验 `audio/manifest.json` 及每个文件的字节数、SHA-256、作者、许可链接和文件页。只接受已实现的 `leximeet.edition.v1`、`leximeet.manifest.v1`、`leximeet.entry.v1`。验证完才原子切换当前只读版本，并保留上一版本用于回滚；校验或迁移失败时保持旧版本可查。用户笔记和单词本不在词包目录，也不随词包覆盖。
 
-`release_status=candidate-needs-license-and-human-review` 的本地归档仅用于验证；正式默认下载入口须在发布门禁完成后另行签署/标记。客户端不得仅凭文件名 `0.0.1` 判断它已正式发布。
+旧版本地归档带 `release_status=candidate-needs-license-and-human-review`；当前构建源码改为 `candidate-needs-human-review`，需要在重新全量构建后才会出现在新归档中。这两种候选状态都仅用于验证；正式默认下载入口须在人工和客户端门禁完成后另行标记。客户端不得仅凭文件名 `0.0.1` 判断它已正式发布。建议按[固定版本的 Release 资产方案](DISTRIBUTION.md)下载和安装。
 
 ## 查询
 

@@ -2,9 +2,9 @@
 
 面向词遇浏览器插件、桌面端及后续客户端的离线词典加工项目。目标是从可追溯的开放来源生成**同一语义契约、按客户端能力分档的词典包**：词卡既能快速显示常用词的可靠释义与音标，也能展开词形、义项、例句和词义关系。
 
-> 0.0.1 状态：构建器、无音频词包、WordNet 概念表、Commons 音频核权/缓存工具和测试已实现，本地全量构建与自动校验已通过。**当前产物仍是发布候选，尚未接入插件或桌面端，也尚未通过 ECDICT 字段权利和人工语义抽检门禁。**[构建与使用](docs/BUILD.md)说明实际命令，[客户端契约](docs/CLIENT_CONTRACT.md)说明接入规则，[数据许可](DATA-LICENSE.md)说明发行边界。
+> 0.0.1 状态：构建器、无音频词包、WordNet 概念表、Commons 音频核权/缓存工具和测试已实现，旧版本地全量候选已通过自动校验。**当前仍未完成分层词义人工抽检、音频抽查和插件/桌面端真实安装验收；来源策略调整后需要重建归档。**[构建与使用](docs/BUILD.md)说明命令，[客户端契约](docs/CLIENT_CONTRACT.md)说明接入规则，[数据许可](DATA-LICENSE.md)说明来源与权利通知入口。
 
-无音频版的在线真人录音、系统朗读，以及微软和有道服务的费用与缓存许可比较，见[音频提供方与按需缓存](docs/AUDIO_PROVIDERS.md)。
+无音频版按 Aictionary、qwerty-learner、Read Frog、Pot 的实现经验组织按需朗读；提供方比较和缓存规则见[音频提供方与按需缓存](docs/AUDIO_PROVIDERS.md)。桌面端和插件端如何取得词包见[分发与接入方案](docs/DISTRIBUTION.md)。
 
 ## 为什么不直接把五份词典拼成一个 JSON
 
@@ -87,16 +87,18 @@ git submodule status
 第一轮加工前至少完成：
 
 1. 固定 Wiktionary/Kaikki English 数据快照、open-dictionary Release、WordNet 正式数据版次及各文件 SHA-256。
-2. 输出字段级来源与许可证清单，决定可发布的 ECDICT 基础包和含 CC BY-SA 内容的增强包边界。
+2. 输出字段级来源与许可证清单；ECDICT 采用署名和权利通知处理策略，含 CC BY-SA 内容按其原许可保留署名与相同方式共享信息。
 3. 对同形异义、英美/词性多读音、词义关系、例句、考试标签做抽样人工复核；计算每字段覆盖率、冲突率、词包大小和端上查询耗时。
 4. 在隔离浏览器配置与桌面测试数据中验证安装、离线查询、增量升级、回滚、损坏包拒绝和连接桌面后的单词本一致性。
 
 ## 许可与分发
 
-本仓库目前的 [LICENSE](LICENSE) 为 **GPL-3.0，约束本仓库自身代码**。上游 Git 子模块各自保留许可证；它不把所有词典数据改授为 GPL-3.0。ECDICT 仓库标示 MIT，但 README 也叙述了多个历史资料来源；正式发布前保留来源与署名审计。Wiktextract **工具代码**为 MIT，Wiktionary **内容**按其自身许可处理。open-dictionary 将其发布的数据工件声明为 CC BY-SA 4.0，Open English WordNet 为 CC BY 4.0 并要求保留相关署名，CMUdict 有自身许可与声明。融合产物须逐字段保留来源，按实际纳入的数据履行署名与相同方式共享义务；不能仅写一句“开源”就整体打包。
+本仓库目前的 [LICENSE](LICENSE) 为 **GPL-3.0，约束本仓库自身代码**。上游 Git 子模块各自保留许可证；它不把所有词典数据改授为 GPL-3.0。ECDICT 仓库标示 MIT，首版按维护者选定的署名与权利通知策略使用；Wiktextract **工具代码**为 MIT，Wiktionary **内容**按其自身许可处理。open-dictionary 将其发布的数据工件声明为 CC BY-SA 4.0，Open English WordNet 为 CC BY 4.0 并要求保留相关署名，CMUdict 有自身许可与声明。融合产物须逐字段保留来源，按实际纳入的数据履行署名与相同方式共享义务。具体说明见[数据许可](DATA-LICENSE.md)。
 
 仓库不收录尚未核验的 Wiktionary dump、Release 文件、qwerty 词表、有道录音或 Commons 音频。生成词包发布之前必须提供独立的数据许可说明、机器可读来源清单、原始快照哈希及可复现构建记录。当前桌面端只包含 ECDICT 词包；本项目文档不代表已经完成桌面或插件集成。
 
 ## 致谢与来源
 
 感谢 [ECDICT](https://github.com/skywind3000/ECDICT)、[Wiktionary 贡献者](https://en.wiktionary.org/)、[Wiktextract/Kaikki](https://github.com/tatuylonen/wiktextract)、[Open English WordNet 与 Princeton WordNet](https://github.com/globalwordnet/english-wordnet)、[open-dictionary](https://github.com/ahpxex/open-dictionary)、[CMUdict](https://github.com/cmusphinx/cmudict) 的贡献者；感谢 [DictionaryByGPT4](https://github.com/Ceelog/DictionaryByGPT4)、[qwerty-learner](https://github.com/RealKai42/qwerty-learner)、[MuJing](https://github.com/tangshimin/MuJing) 和 [Read Frog](https://github.com/mengxi-ream/read-frog) 提供学习体验与数据组织方面的参考。各项目的代码、数据和媒体许可仍以其原始声明为准。
+
+如认为本项目使用了不应收录的词条、字段或音频，请联系 [13622993145@163.com](mailto:13622993145@163.com) 并说明内容位置与权利依据；维护者会核查并移除或替换相应使用。详情见[数据许可与处理方式](DATA-LICENSE.md)。

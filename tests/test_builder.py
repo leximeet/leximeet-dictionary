@@ -89,6 +89,7 @@ class BuilderTests(unittest.TestCase):
             output = root / "out"
             manifest = build(paths, lock, output, core_size=2)
             second = build(paths, lock, root / "out-again", core_size=2)
+            self.assertEqual(manifest["release_status"], "candidate-needs-human-review")
             self.assertEqual(manifest["outputs"], second["outputs"])
             self.assertEqual(manifest["counts"]["total_entries"], 3)
             self.assertEqual(manifest["counts"]["audit_aligned"], 2)

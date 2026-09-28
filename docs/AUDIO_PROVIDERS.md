@@ -20,9 +20,22 @@
 | Azure AI Speech 付费层 | 按资源/地区计费，需密钥或令牌 | 产品条款允许付费层客户使用预置神经语音输出；具体缓存、展示及再分发方式仍须依所选合同和条款核对 | 可选商业提供方，经服务端代理接入 |
 | 有道智云标准 TTS / 词典发音 | 应用 ID/密钥；新账户有 50 元体验资金，之后按成功调用计费 | 通用服务条款第 9.2 节限制未经许可缓存、再利用服务数据；不能默认实现“查一次长期缓存” | 不接入默认缓存链；取得明确许可后再评估 |
 | Free Dictionary API | 公共免费查询接口；返回的音频可能来自不同域名 | API 免费和代码开源不足以证明每条音频的再分发权；项目示例曾返回第三方音频域名 | 仅作发现线索；须回溯到有许可的原始文件 |
-| Edge Read Aloud / 社区 Edge TTS 接口 | Edge 浏览器功能；社区实现通常调用未作为开发者公共服务承诺的路径 | 未找到官方面向第三方的稳定、可缓存的免费发音 API 许可 | 不作为发布版依赖 |
+| Edge Read Aloud / 社区 Edge TTS 接口 | Edge 浏览器功能；社区实现通常调用未作为开发者公共服务承诺的路径 | 未找到官方面向第三方的稳定、可缓存的免费发音 API 许可 | 可研究为可关闭的在线备选，不能成为离线查词依赖 |
 
 依据：[Commons 复用指南](https://commons.wikimedia.org/wiki/Commons:Reusing_content_outside_Wikimedia/en)、[MediaWiki imageinfo](https://www.mediawiki.org/wiki/API:Imageinfo)、[Web Speech API 规范](https://github.com/WebAudio/web-speech-api/blob/main/index.bs)、[Azure Speech 定价](https://azure.microsoft.com/en-us/pricing/details/speech/)、[Azure Speech 配额](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/speech-services-quotas-and-limits)、[微软产品条款](https://www.microsoft.com/licensing/terms/en-US/productoffering/MicrosoftAzure/allprograms)、[有道 TTS 定价](https://ai.youdao.com/DOCSIRMA/html/tts/price/yyhc/index.html)、[有道服务条款](https://ai.youdao.com/DOCSIRMA/html/agreement/terms/ydzyfwkt/index.html)、[Free Dictionary API 项目](https://github.com/meetDeveloper/freeDictionaryAPI)。Edge 行是对上述官方开发文档范围的判断，不把“未找到”说成技术上永远不能访问。
+
+## 参考项目的实际做法与词遇取舍
+
+以下引用固定到本地核查过的提交，说明**无音频文件随词典安装、点击时播放**可以怎样做。参考项目的技术实现不自动授予其在线服务的稳定调用或缓存权利。
+
+| 项目与代码 | 核查到的运行方式 | 词遇可采用的部分 |
+| --- | --- | --- |
+| [Aictionary `00eb58c`](https://github.com/ahpxex/Aictionary/blob/00eb58cdba6626bbbd8d35ff206ed28ed67553fb/src-tauri/src/tts.rs)、[缓存](https://github.com/ahpxex/Aictionary/blob/00eb58cdba6626bbbd8d35ff206ed28ed67553fb/src-tauri/src/audio_cache.rs) | Tauri/Rust 将 Edge 设为免配置的合成语音提供方，按词、提供方、音色等组合找应用数据目录内缓存，向前端发送播放事件；也支持需密钥的其他提供方。其 [Edge 实现](https://github.com/ahpxex/Aictionary/blob/00eb58cdba6626bbbd8d35ff206ed28ed67553fb/src-tauri/src/edge_tts.rs)直连消费端路径。 | 桌面端采用提供方接口、独立缓存目录、停止/错误事件；不把 Edge 消费端地址和令牌复制成词遇长期承诺的官方 API。 |
+| [qwerty-learner `122acd9`](https://github.com/RealKai42/qwerty-learner/blob/122acd90b4079dd040c28a14356447f6553cff83/src/hooks/usePronunciation.ts)、[设备朗读](https://github.com/RealKai42/qwerty-learner/blob/122acd90b4079dd040c28a14356447f6553cff83/src/hooks/useSpeech.ts) | 词音使用有道网页 `dictvoice` 地址，英音 `type=1`、美音 `type=2`，由 `use-sound`/Howler 播放；还会对下一个词预加载。释义朗读另用 `speechSynthesis`。 | 借鉴美/英音切换、播放/停止状态和词音与释义 TTS 分离；词遇默认只在点击后联网，不默认预加载有道网页资源。 |
+| [Read Frog `784a6f0`](https://github.com/mengxi-ream/read-frog/blob/784a6f016fbd3fbe7fd3e671e2b94a8cdc9dddab/src/hooks/use-text-to-speech.tsx)、[播放控制器](https://github.com/mengxi-ream/read-frog/blob/784a6f016fbd3fbe7fd3e671e2b94a8cdc9dddab/src/utils/tts-playback/dom-audio-controller.ts) | 浏览器扩展向后台发送 Edge TTS 请求，长文本分块，按文本/音色/语速等键复用内存查询结果（10 分钟 GC），以 Blob URL 播放后回收；用 request ID 处理停止和过期响应。 | 插件端采用后台请求、受控播放、取消和短期内存复用；内存查询缓存与可持久保存的音频文件是两种不同能力。 |
+| [Pot `594d32e`](https://github.com/pot-app/pot-desktop/blob/594d32ede96acd106b0256deaa8bb440ffcdff40/src/services/tts/lingva/index.jsx)、[服务配置](https://github.com/pot-app/pot-desktop/blob/594d32ede96acd106b0256deaa8bb440ffcdff40/src/window/Config/pages/Service/Tts/index.jsx) | TTS 提供方可排序和配置；内置 Lingva 请求地址可改，并有测试入口；收到音频后由 [AudioContext](https://github.com/pot-app/pot-desktop/blob/594d32ede96acd106b0256deaa8bb440ffcdff40/src/hooks/useVoice.jsx) 解码播放。其有道翻译提供方另取返回的英/美音频 URL。 | 借鉴可切换提供方、连接测试和播放资源清理；Lingva 实例可用性与服务条款须按实际部署判断。 |
+
+词遇 0.0.1 无音频版的**词包**不附录音文件；客户端点击朗读时，按“已获准的私有文件缓存 → Commons 候选核验/下载 → 设备 TTS”执行。后续可把 Edge、Lingva 或有道作为用户可关闭的额外适配器，但不能让任何一个在线接口失败时拖垮离线词卡。Aictionary 和 Read Frog 证明了请求、缓存和播放可拆成独立层；qwerty 和 Pot 证明了英美切换、服务选择的交互价值。词遇自己的缓存政策仍按每个实际来源确定，而不是照搬其他项目对第三方 URL 的处理。
 
 ## 默认路径：Commons 真人录音按需核权并缓存
 
