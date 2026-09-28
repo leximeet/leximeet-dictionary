@@ -1,17 +1,7 @@
-name: Dictionary 0.0.1 candidate
+name: Dictionary 0.0.1 data check
 
 on:
   workflow_dispatch:
-    inputs:
-      artifact:
-        description: '仅上传本次选择的资产；完整构建始终生成并核验三种资产'
-        required: true
-        default: core
-        type: choice
-        options:
-          - core
-          - no-audio
-          - with-audio
 
 permissions:
   contents: read
@@ -68,34 +58,3 @@ jobs:
           python -m leximeet_dictionary audio-review-sheet \
             --audio-manifest build/v0.0.1/audio/manifest.json \
             --out build/v0.0.1/qa/audio-review-sample.csv
-      - name: 生成并核验三个独立资产
-        shell: bash
-        run: |
-          set -euo pipefail
-          python -m leximeet_dictionary package --root build/v0.0.1 --out dist
-          python -m leximeet_dictionary verify-core dist/leximeet-dictionary-0.0.1-core.tar.gz
-          python -m leximeet_dictionary verify-archive dist/leximeet-dictionary-0.0.1-no-audio.tar.gz
-          python -m leximeet_dictionary verify-archive dist/leximeet-dictionary-0.0.1-with-audio.tar.gz
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          from leximeet_dictionary.builder import file_hash
-          result = json.loads(Path('dist/release-candidate.json').read_text())
-          for item in result['artifacts']:
-              assert file_hash(Path('dist') / item['file']) == (item['bytes'], item['sha256']), item['file']
-          assert {item['edition'] for item in result['artifacts']} == {'core', 'no-audio', 'with-audio'}
-          PY
-      - name: 上传所选候选资产与审计报告
-        uses: actions/upload-artifact@v4
-        with:
-          name: dictionary-0.0.1-${{ inputs.artifact }}-${{ github.run_id }}
-          path: |
-            dist/leximeet-dictionary-0.0.1-${{ inputs.artifact }}.tar.gz
-            dist/release-candidate.json
-            build/v0.0.1/qa/quality-report.json
-            build/v0.0.1/qa/review-sample.csv
-            build/v0.0.1/qa/audio-review-sample.csv
-            build/v0.0.1/qa/audit-unaligned.json
-          if-no-files-found: error
-          compression-level: 0
-          retention-days: 1

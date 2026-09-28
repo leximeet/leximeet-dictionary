@@ -1,15 +1,16 @@
-# 词包消费契约（0.0.1）
+# 0.0.1 词包消费契约（目标，尚未实现）
 
-浏览器插件和桌面端应从固定版本的 GitHub Release 获取资产，校验 `release-candidate.json` 中的外层 SHA-256，再按归档内 manifest 校验每个文件。开发期可以使用本地 `dist/final/`；当前 `candidate-needs-human-review` 状态不能被当成正式自动更新信号。源码仓库用于开发，不作为运行时词典子模块。
+0.0.1 只发布**核心版**和**完整版**。当前 `dist/final/` 中的三包是旧候选，不符合本契约，不能用于正式内置或升级。客户端从固定版本的 Release 获取资产；仓库源码不作为运行时子模块。
 
-| 资产 | 适合的客户端 | 主要内容 |
-| --- | --- | --- |
-| `core.tar.gz` | 浏览器轻量离线初装 | 5,000 词 JSONL、清单、许可与审校依据 |
-| `no-audio.tar.gz` | 完整离线查词 | SQLite、完整 JSONL、音频候选目录 |
-| `with-audio.tar.gz` | 需要高频离线播放 | 与无音频版相同的词典，加 436 条录音及逐文件署名 |
+| 版本 | 词条范围 | 离线发音 | 安装方式 |
+| --- | --- | --- | --- |
+| 核心版 `core` | open-dictionary 全部 84,212 条完整词卡，以及有 ECDICT 词频或考试标签的 33,690 条缺词；当前固定输入共 117,902 条 | 每条词条至少关联一段已随包提供、可解码播放的音频 | 插件和桌面端内置，不设词包大小上限；发布前仍须验证实际安装渠道是否接受该体积 |
+| 完整版 `full` | 当前固定输入的全部 811,092 条词条及完整索引 | 每条词条至少关联一段已随包提供、可解码播放的音频 | 用户在应用内主动下载，校验完成后替换当前词包 |
 
-完整包的 `dictionary.sqlite` 有 `entries` 词条表和 `forms` 词形索引；`entries.payload` 与 `entries.jsonl.gz` 使用同一 `leximeet.entry.v1` JSON。先按 Unicode NFC + casefold 查词头，没有结果时才回退到词形索引；大小写完全匹配的结果排前。参考实现可运行 `python3 -m leximeet_dictionary lookup --db build/v0.0.1-final/dictionary.sqlite bank`。
+“逐词音频”按 `entry_id` 统计，要求 `audio_covered_entry_count == entry_count`。同音词可指向同一音频文件，但不能仅凭拼写相同就复用；多读音、有英美差异的词可以附多段。真人录音与合成录音须分别标明来源、口音、生成器或作者、许可及文件哈希。设备 TTS、音标、在线链接和朗读缓存都**不计入**随包离线音频覆盖率。当前仅有 436 条已核验录音，不能声称任一版本达标。
 
-展示时按 `senses[].display_order` 排序。策展义项的中英文和 ECDICT 的 `zh_fallback` 不一定逐义对齐；后者只能标为“词条级回退”。若有 `editorial.display_zh`，标为“词遇审校”，其 `revisions[]` 保留旧值与证据。义项 `labels/topics` 与词条 `exam_tags` 不混用；IPA、CMUdict ARPABET 和 ECDICT 旧音标须区分。WordNet 只显示为未对齐的概念候选。
+两个版本的词条仍使用 `leximeet.entry.v1`；核心版保留入选词条的完整义项、例句、来源、标签、中文回退和音标，不为缩包裁成词头列表。完整版是核心版的词条与音频超集。发布清单至少写明词典版本、版本类型、词条数、音频覆盖词条数、压缩格式、各下载文件的字节数和 SHA-256。归档可按体积分片，**分片数量不等于版本数量**；每个 GitHub Release 资产须小于 2 GiB（[GitHub 规则](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases)）。
 
-朗读先查独立离线录音包；其余在用户点击时查询并缓存已核权的 Commons 文件或使用设备 TTS。失败不影响离线查词。词包只读，用户单词本、标签、笔记和朗读缓存放在独立存储；安装新包先验证再原子切换，并保留旧版以便回滚。当前本仓库只验证了参考包与格式，真实客户端接入测试由各消费项目承担。
+插件和桌面端的安装流程：先下载到临时位置 → 校验外层与逐文件哈希、schema、词条及音频覆盖 → 解包并检查离线播放 → 原子切换当前词包。下载失败、校验失败或中断时继续使用原核心版；用户笔记、单词本、标签及朗读缓存始终放在词包之外。应用不自动下载完整版，也不把在线朗读当成离线覆盖。具体客户端实现与原生测试留在各消费项目。
+
+查词仍先按 Unicode NFC + casefold 查词头，找不到再查词形。按 `senses[].display_order` 展示；ECDICT 的 `zh_fallback` 是词条级回退，不能冒充逐义翻译。`labels/topics` 属于义项，`exam_tags` 属于词条。IPA、CMUdict ARPABET、真人录音和合成音频在界面上保持区分；WordNet 目前只提供未对齐的概念候选。
