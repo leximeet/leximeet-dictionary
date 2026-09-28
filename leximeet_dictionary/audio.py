@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import csv
 import json
 import re
+import shutil
 import sqlite3
 import time
 import urllib.parse
@@ -35,6 +37,12 @@ def plain_text(markup: str) -> str:
     parser = _Text()
     parser.feed(markup)
     return " ".join("".join(parser.parts).split())
+
+
+def explicit_artist(artist: str) -> bool:
+    """Commons 的推定作者提示不等于文件显式署名，不能自动进入离线包。"""
+    value = artist.casefold()
+    return bool(artist) and "no machine-readable author provided" not in value and " assumed (" not in value
 
 
 def file_title(url: str) -> str | None:
@@ -118,7 +126,7 @@ def review(info: dict) -> tuple[dict | None, str | None]:
     media_url = info.get("url", "")
     if license_name not in ALLOWED_LICENSES:
         return None, "license-not-allowlisted"
-    if not artist or not license_url:
+    if not explicit_artist(artist) or not license_url:
         return None, "missing-artist-or-license-url"
     license_parts = urllib.parse.urlparse(license_url)
     if license_parts.scheme != "https" or license_parts.netloc != "creativecommons.org":
@@ -223,6 +231,77 @@ def build_audio(db_path: Path, out: Path, limit: int = 500) -> dict:
     return manifest
 
 
+def install_locked_audio(db_path: Path, out: Path, audio_lock: Path,
+                         sources_lock: Path, source_dir: Path | None = None) -> dict:
+    """用固定清单和文件哈希重建录音包；在线构建还要复核最新许可元数据。"""
+    source_items = json.loads(sources_lock.read_text(encoding="utf-8"))["artifacts"]
+    lock_record = next((item for item in source_items if item["id"] == "audio-commons-0.0.1-lock"), None)
+    if not lock_record or file_hash(audio_lock) != (lock_record["bytes"], lock_record["sha256"]):
+        raise ValueError("固定音频清单与来源锁不匹配")
+    lock = json.loads(audio_lock.read_text(encoding="utf-8"))
+    assets = lock.get("assets", [])
+    if lock.get("schema_version") != "leximeet.audio.v1" or lock.get("dictionary_version") != "0.0.1":
+        raise ValueError("固定音频清单 schema/version 不兼容")
+    if lock.get("offline_asset_count") != len(assets) or not assets:
+        raise ValueError("固定音频清单资产数量无效")
+    candidates = {item["entry_id"]: item for item in selected_candidates(db_path, lock["requested"])}
+    if len(candidates) != lock["selected_candidates"]:
+        raise ValueError("录音候选集合与固定清单不一致")
+    seen: set[str] = set()
+    for asset in assets:
+        entry_id = asset["entry_id"]
+        candidate = candidates.get(entry_id)
+        relative = Path(asset["path"])
+        if (entry_id in seen or not candidate or
+                any(candidate[field] != asset[field] for field in
+                    ("entry_id", "headword", "rank", "pos", "candidate_url", "title")) or
+                relative.parts != ("files", entry_id + Path(relative.name).suffix.lower()) or
+                file_title(asset["url"]) != asset["title"] or
+                asset["license"] not in ALLOWED_LICENSES or
+                not all(asset.get(field) for field in ("artist", "license_url", "source_page", "attribution")) or
+                not explicit_artist(asset["artist"])):
+            raise ValueError(f"固定录音条目无效：{entry_id}")
+        seen.add(entry_id)
+    if out.exists() and any(out.iterdir()):
+        raise FileExistsError("音频输出目录不为空，避免覆盖旧候选")
+    files_dir = out / "files"
+    files_dir.mkdir(parents=True, exist_ok=True)
+    for offset in range(0, len(assets), 20):
+        batch = assets[offset:offset + 20]
+        if source_dir is None:
+            current = commons_info([item["title"] for item in batch])
+        for asset in batch:
+            if source_dir is None:
+                info = current.get(asset["title"])
+                approved, reason = review(info) if info else (None, "commons-file-not-found")
+                if reason or any(approved[field] != asset[field] for field in
+                                 ("license", "license_url", "artist", "source_page", "mime_type", "expected_bytes")):
+                    raise ValueError(f"Commons 当前署名或许可与固定清单不一致：{asset['title']}")
+            destination = out / asset["path"]
+            if source_dir is None:
+                size, sha256 = _download(asset["url"], destination, asset["bytes"] + 1024)
+            else:
+                shutil.copyfile(source_dir / asset["path"], destination)
+                size, sha256 = file_hash(destination)
+            if (size, sha256) != (asset["bytes"], asset["sha256"]):
+                raise ValueError(f"固定录音文件损坏：{asset['path']}")
+    shutil.copyfile(audio_lock, out / "manifest.json")
+    dictionary_dir = db_path.parent
+    dictionary_manifest_size, dictionary_manifest_sha = file_hash(dictionary_dir / "manifest.json")
+    audio_manifest_size, audio_manifest_sha = file_hash(out / "manifest.json")
+    edition = {"schema_version": "leximeet.edition.v1", "dictionary_version": "0.0.1",
+               "edition": "with-audio", "dictionary_manifest": "manifest.json",
+               "dictionary_manifest_bytes": dictionary_manifest_size,
+               "dictionary_manifest_sha256": dictionary_manifest_sha,
+               "audio_manifest": str((out / "manifest.json").relative_to(dictionary_dir)),
+               "audio_manifest_bytes": audio_manifest_size, "audio_manifest_sha256": audio_manifest_sha,
+               "offline_audio_assets": len(assets),
+               "remaining_audio": "on-demand Commons cache; optional device TTS"}
+    (dictionary_dir / "edition.with-audio.json").write_text(
+        json.dumps(edition, ensure_ascii=False, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+    return lock
+
+
 def cache_on_demand(db_path: Path, word: str, cache_dir: Path, region: str = "en-US") -> dict | None:
     """用户点击朗读时获取并核验一个 Commons 录音；无候选时返回 None。"""
     cache_dir.mkdir(parents=True, exist_ok=True)
@@ -303,3 +382,36 @@ def verify_audio(out: Path) -> dict:
     ):
         raise ValueError("带发音版引用的词典清单不匹配")
     return manifest
+
+
+def write_audio_review_sheet(manifest_path: Path, output: Path, minimum: int = 40) -> dict:
+    """优先抽取少数许可/作者，再覆盖词频跨度，供人工听辨和署名复核。"""
+    from collections import Counter
+
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    assets = manifest["assets"]
+    if not assets or minimum < 1:
+        raise ValueError("音频抽样需要非空资产和正数样本量")
+    main_artist = Counter(asset["artist"] for asset in assets).most_common(1)[0][0]
+    main_license = Counter(asset["license"] for asset in assets).most_common(1)[0][0]
+    unusual = [asset for asset in assets if asset["artist"] != main_artist or asset["license"] != main_license]
+    ordinary = [asset for asset in assets if asset not in unusual]
+    needed = min(len(ordinary), max(0, minimum - len(unusual)))
+    if needed == 1:
+        sampled = ordinary[:1]
+    elif needed > 1:
+        sampled = [ordinary[index * (len(ordinary) - 1) // (needed - 1)] for index in range(needed)]
+    else:
+        sampled = []
+    selected = sorted([*unusual, *sampled], key=lambda asset: (asset["rank"], asset["path"]))
+    output.parent.mkdir(parents=True, exist_ok=True)
+    columns = ("headword", "rank", "title", "path", "artist", "license", "license_url",
+               "source_page", "sha256", "review_status", "word_audio_match",
+               "attribution_correct", "license_correct", "review_notes")
+    with output.open("w", newline="", encoding="utf-8") as stream:
+        writer = csv.DictWriter(stream, fieldnames=columns)
+        writer.writeheader()
+        for asset in selected:
+            writer.writerow({**{name: asset.get(name, "") for name in columns},
+                             "review_status": "pending"})
+    return {"sample_size": len(selected), "asset_count": len(assets), "review_status": "pending"}

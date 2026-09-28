@@ -68,7 +68,16 @@
       "bytes": 3618488,
       "license": "CMUdict license; see DATA-LICENSE.md",
       "hashEvidence": "local",
-      "redistributionReview": "pending"
+      "redistributionReview": "license-and-notice-retained"
+    },
+    {
+      "id": "audio-commons-0.0.1-lock",
+      "path": "audio.lock.json",
+      "sha256": "058723000eb4b36c9c4aefc1081b754179550ecab5d8b83efa3d43fffa357f33",
+      "bytes": 487840,
+      "license": "Per-file Commons licenses and attribution in audio.lock.json",
+      "hashEvidence": "local",
+      "redistributionReview": "automated-metadata-review; human-sample-review-pending"
     },
     {
       "id": "open-dictionary-v2-distribution-jsonl-gz",
@@ -81,7 +90,7 @@
       "decompressedBytes": 366537907,
       "license": "CC BY-SA 4.0",
       "hashEvidence": "local-and-upstream-SHA256SUMS",
-      "redistributionReview": "pending"
+      "redistributionReview": "cc-by-sa-attribution-and-sharealike-notice-retained"
     },
     {
       "id": "open-dictionary-v2-audit-jsonl-gz",
@@ -93,7 +102,7 @@
       "decompressedBytes": 625376982,
       "license": "CC BY-SA 4.0",
       "hashEvidence": "local-and-upstream-SHA256SUMS",
-      "redistributionReview": "pending"
+      "redistributionReview": "cc-by-sa-attribution-and-sharealike-notice-retained"
     },
     {
       "id": "open-dictionary-v2-wiktextract-raw",
@@ -110,7 +119,7 @@
       "bytes": 9986555,
       "license": "CC BY 4.0",
       "hashEvidence": "local",
-      "redistributionReview": "pending"
+      "redistributionReview": "cc-by-and-princeton-notices-retained"
     },
     {
       "id": "dictionary-by-gpt4-jsonl",
@@ -125,6 +134,15 @@
       "sha256": "fc3b33cf8c728a69b79e8935a6cfb1aa33f046158e05167d34e288d535db8982",
       "hashEvidence": "local",
       "redistributionReview": "research-only"
+    },
+    {
+      "id": "wiktextract-function-words",
+      "path": "sources/function-words.jsonl",
+      "sha256": "13e7c2be2864c56c4ab584e6353c918819053b093e80d2a4f23046e4cd20f72c",
+      "bytes": 36611,
+      "license": "Wiktionary CC BY-SA 4.0; Kaikki/Wiktextract attribution in DATA-LICENSE.md",
+      "hashEvidence": "local-derived-from-34-pinned-raw-word-records",
+      "redistributionReview": "short-glosses-and-sense-tags-only"
     }
   ]
 }

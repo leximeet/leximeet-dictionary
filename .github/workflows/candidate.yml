@@ -1,0 +1,101 @@
+name: Dictionary 0.0.1 candidate
+
+on:
+  workflow_dispatch:
+    inputs:
+      artifact:
+        description: '仅上传本次选择的资产；完整构建始终生成并核验三种资产'
+        required: true
+        default: core
+        type: choice
+        options:
+          - core
+          - no-audio
+          - with-audio
+
+permissions:
+  contents: read
+
+jobs:
+  candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: 初始化实际构建所需的固定子模块
+        run: git submodule update --init upstream/ecdict upstream/cmudict
+      - name: 下载固定版本的数据工件
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p downloads/open-dictionary/v2.0 downloads/english-wordnet/2025
+          curl --fail --location --retry 4 --retry-all-errors --connect-timeout 30 \
+            'https://github.com/ahpxex/open-dictionary/releases/download/v2.0/distribution.jsonl.gz' \
+            --output downloads/open-dictionary/v2.0/distribution.jsonl.gz
+          curl --fail --location --retry 4 --retry-all-errors --connect-timeout 30 \
+            'https://github.com/ahpxex/open-dictionary/releases/download/v2.0/audit.jsonl.gz' \
+            --output downloads/open-dictionary/v2.0/audit.jsonl.gz
+          curl --fail --location --retry 4 --retry-all-errors --connect-timeout 30 \
+            'https://en-word.net/static/english-wordnet-2025-json.zip' \
+            --output downloads/english-wordnet/2025/english-wordnet-2025-json.zip
+      - name: 运行夹具测试
+        run: |
+          python -m compileall -q leximeet_dictionary
+          python -m unittest discover -s tests -v
+      - name: 全量构建并按 sources.lock.json 校验输入
+        run: |
+          python -m leximeet_dictionary build \
+            --distribution downloads/open-dictionary/v2.0/distribution.jsonl.gz \
+            --audit downloads/open-dictionary/v2.0/audit.jsonl.gz \
+            --ecdict upstream/ecdict/ecdict.csv \
+            --cmudict upstream/cmudict/cmudict.dict \
+            --wordnet downloads/english-wordnet/2025/english-wordnet-2025-json.zip \
+            --out build/v0.0.1
+          python -m leximeet_dictionary verify build/v0.0.1 --deep
+          python -m leximeet_dictionary report \
+            --db build/v0.0.1/dictionary.sqlite --out build/v0.0.1/qa
+      - name: 从固定音频清单重建并复核 Commons 许可
+        run: |
+          python -m leximeet_dictionary audio-pack-locked \
+            --db build/v0.0.1/dictionary.sqlite --out build/v0.0.1/audio \
+            --audio-lock audio.lock.json --sources-lock sources.lock.json
+          python -m leximeet_dictionary verify-audio build/v0.0.1/audio
+          python -m leximeet_dictionary audio-review-sheet \
+            --audio-manifest build/v0.0.1/audio/manifest.json \
+            --out build/v0.0.1/qa/audio-review-sample.csv
+      - name: 生成并核验三个独立资产
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m leximeet_dictionary package --root build/v0.0.1 --out dist
+          python -m leximeet_dictionary verify-core dist/leximeet-dictionary-0.0.1-core.tar.gz
+          python -m leximeet_dictionary verify-archive dist/leximeet-dictionary-0.0.1-no-audio.tar.gz
+          python -m leximeet_dictionary verify-archive dist/leximeet-dictionary-0.0.1-with-audio.tar.gz
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from leximeet_dictionary.builder import file_hash
+          result = json.loads(Path('dist/release-candidate.json').read_text())
+          for item in result['artifacts']:
+              assert file_hash(Path('dist') / item['file']) == (item['bytes'], item['sha256']), item['file']
+          assert {item['edition'] for item in result['artifacts']} == {'core', 'no-audio', 'with-audio'}
+          PY
+      - name: 上传所选候选资产与审计报告
+        uses: actions/upload-artifact@v4
+        with:
+          name: dictionary-0.0.1-${{ inputs.artifact }}-${{ github.run_id }}
+          path: |
+            dist/leximeet-dictionary-0.0.1-${{ inputs.artifact }}.tar.gz
+            dist/release-candidate.json
+            build/v0.0.1/qa/quality-report.json
+            build/v0.0.1/qa/review-sample.csv
+            build/v0.0.1/qa/audio-review-sample.csv
+            build/v0.0.1/qa/audit-unaligned.json
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1

@@ -2,7 +2,7 @@
 
 面向词遇浏览器插件、桌面端及后续客户端的离线词典加工项目。目标是从可追溯的开放来源生成**同一语义契约、按客户端能力分档的词典包**：词卡既能快速显示常用词的可靠释义与音标，也能展开词形、义项、例句和词义关系。
 
-> 0.0.1 状态：构建器、无音频词包、WordNet 概念表、Commons 音频核权/缓存工具和测试已实现，旧版本地全量候选已通过自动校验。**当前仍未完成分层词义人工抽检、音频抽查和插件/桌面端真实安装验收；来源策略调整后需要重建归档。**[构建与使用](docs/BUILD.md)说明命令，[客户端契约](docs/CLIENT_CONTRACT.md)说明接入规则，[数据许可](DATA-LICENSE.md)说明来源与权利通知入口。
+> 0.0.1 状态：构建器、三种独立词包（浏览器核心、完整无音频、完整带发音）、固定录音清单、手动候选 CI、WordNet 概念表和 Commons 按需缓存工具已实现。新源码已完成一次全量构建、深度数据校验和隔离目录安装抽验；**分层词义人工判断、音频听辨/署名抽查、远端 CI 首跑和原生客户端接入仍未完成**，所以目前只提供本地发布候选，不是正式 Release。[构建与使用](docs/BUILD.md)说明命令，[客户端契约](docs/CLIENT_CONTRACT.md)说明接入规则，[数据许可](DATA-LICENSE.md)说明来源与权利通知入口。
 
 无音频版按 Aictionary、qwerty-learner、Read Frog、Pot 的实现经验组织按需朗读；提供方比较和缓存规则见[音频提供方与按需缓存](docs/AUDIO_PROVIDERS.md)。桌面端和插件端如何取得词包见[分发与接入方案](docs/DISTRIBUTION.md)。
 
@@ -13,7 +13,7 @@
 | 层次 | 优先来源 | 用途与边界 |
 | --- | --- | --- |
 | 宽覆盖英汉底座、词形和现有考试标签 | [ECDICT](upstream/ecdict) | 本地 CSV 实测 770,611 行；中文释义覆盖广，但音标是混合旧记法，不能当作规范 IPA，也没有可用的独立音频。 |
-| 可溯源的英语义项、IPA、例句、词形 | [Wiktextract](upstream/wiktextract) 处理的 Wiktionary 快照 | 同时固定**工具 commit 与源 dump 日期/哈希**；只选 English 词条。原始数据的许可不等于工具代码许可。 |
+| 可溯源的英语义项、IPA、例句、词形 | [Wiktextract](upstream/wiktextract) 处理的 Wiktionary 快照 | 同时固定**工具 commit 与源 dump 日期/哈希**；只选 English 词条。0.0.1 另固定 34 个功能词的短义补充，修复主词源过滤冠词/连词的问题；不跨快照猜配义项。原始数据的许可不等于工具代码许可。 |
 | 学习者向双语解释与义项优先级 | [open-dictionary](upstream/open-dictionary) | 现有 84,212 词条的发布说明与 JSONL/SQLite 契约可供参考或再加工；它本身派生自 Wiktionary/Wiktextract，不能当作独立证据投票。 |
 | 词义网络 | [Open English WordNet](upstream/english-wordnet) | 同义词集、上位词、反义词等关系；只在义项可对齐时建立关系，不能凭词形合并。 |
 | 美式发音补充与校验 | [CMUdict](upstream/cmudict) | ARPAbet 音素和重音，保留原记法；转换出的 IPA 需要单独标记为机器转换，不含真人录音。 |
@@ -39,7 +39,7 @@ git submodule update --init
 git submodule status
 ~~~
 
-实际构建命令见[构建与使用](docs/BUILD.md)。`sources.lock.json` 已为 v2.0 的 distribution/audit、ECDICT CSV、CMUdict 和 WordNet 2025 ZIP 固定字节数与 SHA-256；构建器在处理前逐文件验证。不要使用浮动的 latest URL 作为可复现构建输入。
+实际构建命令见[构建与使用](docs/BUILD.md)。`sources.lock.json` 已为 v2.0 的 distribution/audit、ECDICT CSV、CMUdict、WordNet 2025 ZIP 和已提交的 Kaikki 功能词补充文件固定字节数与 SHA-256；构建器在处理前逐文件验证。不要使用浮动的 latest URL 作为可复现构建输入。
 
 ### 为什么暂不把所有参考项目设为子模块
 
@@ -95,7 +95,7 @@ git submodule status
 
 本仓库目前的 [LICENSE](LICENSE) 为 **GPL-3.0，约束本仓库自身代码**。上游 Git 子模块各自保留许可证；它不把所有词典数据改授为 GPL-3.0。ECDICT 仓库标示 MIT，首版按维护者选定的署名与权利通知策略使用；Wiktextract **工具代码**为 MIT，Wiktionary **内容**按其自身许可处理。open-dictionary 将其发布的数据工件声明为 CC BY-SA 4.0，Open English WordNet 为 CC BY 4.0 并要求保留相关署名，CMUdict 有自身许可与声明。融合产物须逐字段保留来源，按实际纳入的数据履行署名与相同方式共享义务。具体说明见[数据许可](DATA-LICENSE.md)。
 
-仓库不收录尚未核验的 Wiktionary dump、Release 文件、qwerty 词表、有道录音或 Commons 音频。生成词包发布之前必须提供独立的数据许可说明、机器可读来源清单、原始快照哈希及可复现构建记录。当前桌面端只包含 ECDICT 词包；本项目文档不代表已经完成桌面或插件集成。
+仓库只收录 34 个高频功能词的固定短义/标签衍生文件，不收录尚未核验的全量 Wiktionary dump、Release 文件、qwerty 词表、有道录音或 Commons 音频。生成词包发布之前必须提供独立的数据许可说明、机器可读来源清单、原始快照哈希及可复现构建记录。当前桌面端只包含 ECDICT 词包；本项目文档不代表已经完成桌面或插件集成。
 
 ## 致谢与来源
 

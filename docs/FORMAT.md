@@ -1,16 +1,18 @@
 # 词典产物格式草案
 
-状态：0.0.1 构建器已有可执行的 `leximeet.entry.v1` 和 `leximeet.manifest.v1`；下文的 `v1alpha1` JSON 是早期设计示例，**不是当前实际产物**。实际字段与双版本安装方式以本节、[构建与使用](BUILD.md)和 `leximeet_dictionary/builder.py` 为准。新源码的完整归档、人工抽检与客户端真实试读仍未完成。
+状态：0.0.1 构建器已有可执行的 `leximeet.entry.v1`、`leximeet.manifest.v1` 和 `leximeet.core.v1`；下文的 `v1alpha1` JSON 是早期设计示例，**不是当前实际产物**。实际字段与三种独立归档以本节、[构建与使用](BUILD.md)和 `leximeet_dictionary/builder.py` 为准。新源码的全量归档、人工抽检与客户端真实试读仍未完成。
 
 ## 0.0.1 已实现的字段契约
 
-一行规范 JSONL 是一个 `entry`，含 `schema_version`、独立 `entry_id`、`headword`、仅供查找的 `lookup_key`、`origin`、`source_entry_id`、`headword_summary_zh`、`memory_hook_zh`、`study_notes_zh`、`forms[]`、`pronunciations[]`、`senses[]`、`ecdict`、`audit_status` 和 `audio_ids[]`。`origin` 为 `curated` 或 `ecdict-fallback`。`ecdict.zh_fallback`/`en_fallback` 始终是词条级原字段；`exam_tags[]` 是来源声称，`frequency_ranks` 保留原 `bnc`/`frq` 名称与正数序位，`legacy_phonetic` 不标 IPA。
+一行规范 JSONL 是一个 `entry`，含 `schema_version`、独立 `entry_id`、`headword`、仅供查找的 `lookup_key`、`origin`、`source_entry_id`、`headword_summary_zh`、`memory_hook_zh`、`study_notes_zh`、`forms[]`、`pronunciations[]`、`senses[]`、`ecdict`、`audit_status` 和 `audio_ids[]`。`origin` 为 `curated` 或 `ecdict-fallback`，表示词条底座；后者也可含独立 Kaikki 功能词英文义项，但不含伪造的策展义项。`ecdict.zh_fallback`/`en_fallback` 始终是词条级原字段；`exam_tags[]` 是来源声称，`frequency_ranks` 保留原 `bnc`/`frq` 名称与正数序位，`legacy_phonetic` 不标 IPA。
 
-`senses[]` 逐条保留 open-dictionary v2.0 的源 `entry_id`、词性、词源组、源 `sense_id` 和组索引，并提供 LexiMeet 自己的 `sense_id`。`english_gloss` 只在**同版 audit** 的词性组、词源组和义项数均对齐时出现，来源标记为 Wiktionary 派生的 audit；中文学习者解释、例句、优先级仍为策展层。`labels[]` 与 `topics[]` 以义项为 scope；未做跨快照义项推断。`pronunciations[]` 区分 `IPA` 与 `ARPABET`，读音地区仅按源标签确定；ECDICT 旧记法在另一字段。
+`senses[]` 逐条保留 open-dictionary v2.0 的源 `entry_id`、词性、词源组、源 `sense_id` 和组索引，并提供 LexiMeet 自己的 `sense_id`。34 个高频功能词另从固定 Kaikki 逐词记录补充缺失的 article/conj 英文义项，保留原始文件哈希、位置和 `cross_snapshot_alignment=not-attempted`，不赋予 open-dictionary 的 core/common/rare 评级。`display_order` 仅决定默认展示顺序，不改源数组：这类功能词先露出前两个原义，其余按策展 core、common、功能词其余义项、rare 排列；同级普通词义在 `name` 专名前。策展义项的 `english_gloss` 只在**同版 audit** 的词性组、词源组和义项数均对齐时出现，来源标记为 Wiktionary 派生的 audit；功能词补充义项则是另一个独立来源的英文原义。中文学习者解释、例句、优先级仍为策展层；功能词没有独立核准的逐义项中文时展示 ECDICT 的词条级回退。`labels[]` 与 `topics[]` 以义项为 scope；未做跨快照义项推断。`pronunciations[]` 区分 `IPA` 与 `ARPABET`，读音地区仅按源标签确定；ECDICT 旧记法在另一字段。
 
 `dictionary.sqlite` 的 `entries` 是词卡正文，`forms` 是词形查询索引，`audio_candidates` 是**待核权线索**，`wordnet_synsets`/`wordnet_lemmas` 是独立概念网络。WordNet 候选查询结果显式标为 `unmapped-headword-candidate`，不装作某个义项的已确认同义词。`audio-candidates.jsonl.gz` 只供在线提供方查线索；词卡的 `audio_ids[]` 在本版为空，录音关联由单独的 `audio/manifest.json` 完成。
 
-无音频版和带发音版分别由 `edition.no-audio.json`、`edition.with-audio.json` 定义，二者共享同一 `manifest.json`、SQLite 和 JSONL。带发音版增装 `audio/` 中经许可元数据审核的高频录音；其他词仍走按需缓存。清单中的 SHA-256 是安装及回滚校验依据。**首次 0.0.1 构建的稳定 ID 只对固定输入与规则成立；下一次来源升级必须提供显式重定向账本，不能凭现有 UUIDv5 规则声称跨版本自动稳定。**
+无音频版和带发音版分别由 `edition.no-audio.json`、`edition.with-audio.json` 定义，二者共享同一 `manifest.json`、SQLite 和 JSONL。独立浏览器核心资产由 `core-manifest.json` 定义，只含 `core.jsonl.gz`、同版来源清单和许可材料，不含完整 SQLite。带发音版增装 `audio/` 中固定内容哈希与许可元数据的高频录音；其他词仍走按需缓存。清单中的 SHA-256 是安装及回滚校验依据。**首次 0.0.1 构建的稳定 ID 只对固定输入与规则成立；下一次来源升级必须提供显式重定向账本，不能凭现有 UUIDv5 规则声称跨版本自动稳定。**
+
+`manifest.json.generator` 记录构建源码 Git commit 与 `dirty` 状态；候选工作目录可处于 dirty，但正式发布必须从已提交的源码重建，使 `generator.dirty=false`。`release-candidate.json` 回填这个值并给三份外层资产记录 SHA-256。源码 commit 证明生成规则的修订，不代替五个输入文件及音频清单各自的字节哈希。
 
 ## 1. 三种不同用途的文件
 

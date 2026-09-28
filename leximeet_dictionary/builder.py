@@ -7,6 +7,7 @@ import gzip
 import hashlib
 import json
 import shutil
+import subprocess
 import sqlite3
 import unicodedata
 import uuid
@@ -14,6 +15,8 @@ import zipfile
 from collections import Counter, defaultdict
 from contextlib import closing
 from pathlib import Path
+
+from .function_words import SOURCE as FUNCTION_SOURCE, append_missing_pos, load_supplement
 
 SCHEMA = "leximeet.entry.v1"
 VERSION = "0.0.1"
@@ -46,6 +49,22 @@ def file_hash(path: Path) -> tuple[int, str]:
             size += len(chunk)
             digest.update(chunk)
     return size, digest.hexdigest()
+
+
+def generator_state(repository_root: Path) -> dict:
+    """记录构建代码与随包声明所处的 Git 修订，未提交修改显式标为 dirty。"""
+    try:
+        commit = subprocess.check_output(
+            ["git", "-C", str(repository_root), "rev-parse", "HEAD"], text=True, stderr=subprocess.DEVNULL
+        ).strip()
+        changes = subprocess.check_output(
+            ["git", "-C", str(repository_root), "status", "--porcelain", "--untracked-files=all", "--",
+             "leximeet_dictionary", "DATA-LICENSE.md", "notices", "sources.lock.json", "audio.lock.json"],
+            text=True, stderr=subprocess.DEVNULL
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return {"commit": None, "dirty": True}
+    return {"commit": commit, "dirty": bool(changes.strip())}
 
 
 def verify_inputs(paths: dict[str, Path], lock_path: Path) -> dict[str, dict]:
@@ -147,7 +166,8 @@ def region_from_tags(tags: list[str]) -> str | None:
     return None
 
 
-def make_entry(curated: dict | None, audit: dict | None, word: str, ecdict_payload: str | None, cmu: dict[str, list[str]]) -> tuple[dict, list[dict]]:
+def make_entry(curated: dict | None, audit: dict | None, word: str, ecdict_payload: str | None,
+               cmu: dict[str, list[str]], function_supplement: dict | None = None) -> tuple[dict, list[dict]]:
     source_entry_id = curated["entry_id"] if curated else None
     entry_id = stable_id("open", source_entry_id) if curated else stable_id("ecdict", word)
     ecdict = ecdict_fields(ecdict_payload)
@@ -225,6 +245,18 @@ def make_entry(curated: dict | None, audit: dict | None, word: str, ecdict_paylo
         "audit_status": "aligned" if curated and audit_aligned else ("missing-or-unaligned" if curated else "not-applicable"),
         "audio_ids": [],
     }
+    append_missing_pos(result, function_supplement, stable_id)
+    # 先露出功能词前两个源义项；其余仍可展开。此排序不声称它们来自主词源的 core 评级。
+    priority_order = {"core": 0, "common": 1, "rare": 3}
+    display_indices = sorted(range(len(result["senses"])), key=lambda index: (
+        -1 if result["senses"][index]["source_ref"]["source"] == FUNCTION_SOURCE
+              and result["senses"][index]["source_ref"]["sense_index"] < 2
+        else 2 if result["senses"][index]["source_ref"]["source"] == FUNCTION_SOURCE
+        else priority_order.get(result["senses"][index]["priority"], 4),
+        result["senses"][index]["pos"] == "name", index
+    ))
+    for display_order, index in enumerate(display_indices):
+        result["senses"][index]["display_order"] = display_order
     return result, audio_candidates
 
 
@@ -302,6 +334,7 @@ def add_wordnet(db: sqlite3.Connection, archive_path: Path) -> tuple[int, int]:
 def build(paths: dict[str, Path], lock_path: Path, out: Path, core_size: int = 5000) -> dict:
     out.mkdir(parents=True, exist_ok=True)
     inputs = verify_inputs(paths, lock_path)
+    function_words = load_supplement(paths["wiktextract-function-words"])
     scratch_path = out / "scratch.sqlite"
     db_path = out / "dictionary.sqlite"
     if scratch_path.exists() or db_path.exists():
@@ -324,9 +357,14 @@ def build(paths: dict[str, Path], lock_path: Path, out: Path, core_size: int = 5
                 if ecdict_row:
                     scratch.execute("UPDATE ecdict SET used=1 WHERE word=?", (word,))
                     counts["curated_with_ecdict"] += 1
-                entry, audio = make_entry(curated, json.loads(audit_row[0]) if audit_row else None, word, ecdict_row[0] if ecdict_row else None, cmu)
+                entry, audio = make_entry(curated, json.loads(audit_row[0]) if audit_row else None,
+                                          word, ecdict_row[0] if ecdict_row else None, cmu,
+                                          function_words.get(word))
                 add_entry(dictionary, entry, audio)
                 counts["curated_entries"] += 1
+                added = sum(sense["source_ref"]["source"] == FUNCTION_SOURCE for sense in entry["senses"])
+                counts["function_word_senses"] += added
+                counts["function_word_entries"] += bool(added)
                 if entry["audit_status"] == "aligned":
                     counts["audit_aligned"] += 1
                 if counts["curated_entries"] % 5000 == 0:
@@ -334,16 +372,19 @@ def build(paths: dict[str, Path], lock_path: Path, out: Path, core_size: int = 5
                     scratch.commit()
         scratch.commit()
         for word, payload in scratch.execute("SELECT word,payload FROM ecdict WHERE used=0 ORDER BY word"):
-            entry, _ = make_entry(None, None, word, payload, cmu)
+            entry, _ = make_entry(None, None, word, payload, cmu, function_words.get(word))
             add_entry(dictionary, entry, [])
             counts["ecdict_only_entries"] += 1
+            added = sum(sense["source_ref"]["source"] == FUNCTION_SOURCE for sense in entry["senses"])
+            counts["function_word_senses"] += added
+            counts["function_word_entries"] += bool(added)
             if counts["ecdict_only_entries"] % 10000 == 0:
                 dictionary.commit()
         dictionary.commit()
         counts["wordnet_synsets"], counts["wordnet_lemma_senses"] = add_wordnet(dictionary, paths["english-wordnet-2025-core"])
         counts["total_entries"] = counts["curated_entries"] + counts["ecdict_only_entries"]
         counts["audio_candidates"] = dictionary.execute("SELECT count(*) FROM audio_candidates").fetchone()[0]
-        counts["senses"] = sum(len(json.loads(row[0])["senses"]) for row in dictionary.execute("SELECT payload FROM entries WHERE origin='curated'"))
+        counts["senses"] = sum(len(json.loads(row[0])["senses"]) for row in dictionary.execute("SELECT payload FROM entries"))
         files = {}
         files["entries.jsonl.gz"] = write_gzip_lines(out / "entries.jsonl.gz", (row[0] for row in dictionary.execute("SELECT payload FROM entries ORDER BY lookup_key,headword,entry_id")))
         files["core.jsonl.gz"] = write_gzip_lines(out / "core.jsonl.gz", (row[0] for row in dictionary.execute("SELECT payload FROM entries WHERE rank IS NOT NULL ORDER BY rank,headword,entry_id LIMIT ?", (core_size,))))
@@ -369,6 +410,7 @@ def build(paths: dict[str, Path], lock_path: Path, out: Path, core_size: int = 5
         "schema_version": "leximeet.manifest.v1",
         "dictionary_version": VERSION,
         "entry_schema": SCHEMA,
+        "generator": generator_state(repository_root),
         "counts": dict(counts),
         "inputs": inputs,
         "outputs": {name: {"bytes": size, "sha256": sha} for name, (size, sha) in files.items()},
@@ -421,11 +463,22 @@ def verify_package(out: Path) -> dict:
         size, sha = file_hash(out / name)
         if (size, sha) != (expected["bytes"], expected["sha256"]):
             raise ValueError(f"词包损坏：{name}")
-    edition = json.loads((out / "edition.no-audio.json").read_text(encoding="utf-8"))
-    if edition.get("edition") != "no-audio" or file_hash(out / "manifest.json") != (
-        edition["dictionary_manifest_bytes"], edition["dictionary_manifest_sha256"]
-    ):
-        raise ValueError("无音频版清单不匹配")
+    # 完整无音频版与带发音版各自可单独安装；构建目录则允许同时存在两个 edition。
+    editions = [out / f"edition.{name}.json" for name in ("no-audio", "with-audio")]
+    if not any(path.is_file() for path in editions):
+        raise ValueError("词包缺少 edition 清单")
+    for edition_path in editions:
+        if not edition_path.is_file():
+            continue
+        edition = json.loads(edition_path.read_text(encoding="utf-8"))
+        name = edition_path.name.removeprefix("edition.").removesuffix(".json")
+        if edition.get("edition") != name or file_hash(out / "manifest.json") != (
+            edition["dictionary_manifest_bytes"], edition["dictionary_manifest_sha256"]
+        ):
+            raise ValueError(f"{name} 清单不匹配")
+        if name == "with-audio":
+            from .audio import verify_audio
+            verify_audio(out / "audio")
     with closing(sqlite3.connect(f"file:{out / 'dictionary.sqlite'}?mode=ro", uri=True)) as db:
         if db.execute("PRAGMA quick_check").fetchone()[0] != "ok":
             raise ValueError("SQLite 完整性检查失败")

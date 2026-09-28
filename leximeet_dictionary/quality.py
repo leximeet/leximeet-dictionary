@@ -12,6 +12,8 @@ from collections import Counter
 from contextlib import closing
 from pathlib import Path
 
+from .function_words import SOURCE as FUNCTION_SOURCE
+
 
 def report(db_path: Path, out: Path) -> dict:
     out.mkdir(parents=True, exist_ok=True)
@@ -22,6 +24,7 @@ def report(db_path: Path, out: Path) -> dict:
     with closing(sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)) as db:
         # UUIDv5 排序提供固定的分层随机样本；频率样本另外按原 rank 抽取。
         strata = [
+            ("function-word-supplement", "headword IN ('the','and','a','an','or','but','if','because','although','nor')", "headword,entry_id", 10),
             ("curated-ranked", "origin='curated' AND rank IS NOT NULL", "rank,entry_id", 40),
             ("curated-unranked", "origin='curated' AND rank IS NULL", "entry_id", 40),
             ("fallback-ranked", "origin='ecdict-fallback' AND rank IS NOT NULL", "rank,entry_id", 40),
@@ -34,7 +37,7 @@ def report(db_path: Path, out: Path) -> dict:
                 if entry_id in seen:
                     continue
                 item = json.loads(payload)
-                first_senses = item["senses"][:2]
+                first_senses = sorted(item["senses"], key=lambda sense: sense["display_order"])[:2]
                 ipa = [p["text"] for p in item["pronunciations"] if p["notation"] == "IPA"][:3]
                 samples.append({"stratum": name, "entry_id": entry_id, "headword": item["headword"],
                                 "origin": item["origin"], "source_entry_id": item["source_entry_id"],
@@ -60,8 +63,12 @@ def report(db_path: Path, out: Path) -> dict:
             counts["entries"] += 1
             counts[item["origin"]] += 1
             if item["senses"]:
-                counts["entries_with_curated_senses"] += 1
-                counts["curated_senses"] += len(item["senses"])
+                curated_senses = [sense for sense in item["senses"] if sense["source_ref"]["source"] != FUNCTION_SOURCE]
+                function_senses = [sense for sense in item["senses"] if sense["source_ref"]["source"] == FUNCTION_SOURCE]
+                counts["entries_with_curated_senses"] += bool(curated_senses)
+                counts["curated_senses"] += len(curated_senses)
+                counts["entries_with_function_senses"] += bool(function_senses)
+                counts["function_senses"] += len(function_senses)
                 counts["senses_with_english_gloss"] += sum(bool(s["english_gloss"]) for s in item["senses"])
                 counts["senses_with_topics"] += sum(bool(s["topics"]) for s in item["senses"])
             if item["audit_status"] == "missing-or-unaligned":

@@ -1,6 +1,6 @@
 # 上游版本锁定与数据工件门禁
 
-核查日期：2026-09-28。本文固定 0.0.1 发布候选的仓库修订和数据版本。仓库 commit、发布标签、实际文件哈希是不同层次；已进入构建的五个数据文件均已在本地复算 SHA-256，构建器运行前逐文件核对 [sources.lock.json](../sources.lock.json)。**输入可复现不等于数据权利或语义质量已通过发布审核。**
+核查日期：2026-09-28。本文固定 0.0.1 发布候选的仓库修订和数据版本。仓库 commit、发布标签、实际文件哈希是不同层次；已进入构建的六个数据文件均已在本地复算 SHA-256，构建器运行前逐文件核对 [sources.lock.json](../sources.lock.json)。**输入可复现不等于数据权利或语义质量已通过发布审核。**
 
 ## A. 已固定的仓库修订
 
@@ -25,6 +25,8 @@
 | --- | --- | --- |
 | ECDICT 的 ecdict.csv | SHA-256 1a6947e04785db63613a92e14903cdae7954f7e84860b10e68e5c7cbb3f9c3cf | 已对本地子模块文件计算；可用于基线导入，发布前仍需字段来源审计 |
 | CMUdict 的 cmudict.dict | SHA-256 81917843c7f44ce2b094ac63873c2c7a4cf802040792c455ba3ca406891c3d22 | 已对本地子模块文件计算 |
+| 固定高频功能词补充 `sources/function-words.jsonl` | 36,611 bytes；SHA-256 13e7c2be2864c56c4ab584e6353c918819053b093e80d2a4f23046e4cd20f72c | 34 词、161 个 article/conj 英文义项；每行带 Kaikki 原始逐词 URL/字节数/SHA-256。来自 2026-09-02 dump 的 2026-09-25 提取；用 `scripts/prepare_function_words.py` 从本地原始逐词文件重放得到同一哈希。只补主词源缺失词性，不跨版按词头挂到旧义项 |
+| 固定 Commons 音频清单 `audio.lock.json` | 487,840 bytes；SHA-256 058723000eb4b36c9c4aefc1081b754179550ecab5d8b83efa3d43fffa357f33 | 固定 436 条录音的内容哈希、作者、许可、来源页；64 条拒绝记录包括 18 条作者仅为推定的文件。在线重建还需复核当前 Commons 元数据，40 条人工抽样未完成 |
 | open-dictionary v2.0 distribution.jsonl.gz | 压缩 97,071,330 bytes；SHA-256 69af69cdc685b5dce465613d1cc8fffb598eb46714f57cf73bd6606c2ceb7e43；流式解压 366,537,907 bytes，SHA-256 95026a4b78aa83f1f32481e8ff30ea3f7d942b648b3d6e66ef64ca3a194cb66e | 已下载并本地复算，和上游 SHA256SUMS 一致；发行标签解析到 53189a610287efb9ce627f9ab93409c639acdc47 |
 | open-dictionary v2.0 audit.jsonl.gz | 压缩 148,028,969 bytes；SHA-256 e3eadd2d0029423ef7130e3bb6890e2f6cb316c64c2e935c479fe6dcb872340b；流式解压 625,376,982 bytes，SHA-256 1b6a1b82750320491d50d5204236e26295afe3b1b92fd8d37e518ce456a82ab4 | 已下载并本地复算，和上游 SHA256SUMS 一致；只提取短原义、标签、读音及音频线索，不复制历史引文 |
 | open-dictionary 的 Wiktextract 源谱系 | 上游发行说明声称快照日期 2025-10-23，raw-wiktextract-data.jsonl.gz SHA-256 dcdf2c2d5941a116d9104e3e3f118d3cc58c8488eba3d5ffee461947c3aa05a9 | 上游公布值，未取得原文件；仅作为首选同快照对齐目标 |
@@ -32,15 +34,15 @@
 | Open English WordNet 正式数据 | `english-wordnet-2025-json.zip`，9,986,555 bytes；SHA-256 7d749f6e2c39e6970e4997839dcf6e42fd281f3c2fae0171d2192bae8cfa4b51；[官方发布页](https://github.com/globalwordnet/english-wordnet/releases/tag/2025-edition) | 2025 Edition 核心版已下载并本地复算；2025 Plus 不混入 |
 | DictionaryByGPT4 的 gptwords.json | 本地 SHA-256 51bc73affec742690d9683f282f8944e7a191e94592ca9c7c2a317e5f92fb5d0 | 仅候选研究，逐条事实和许可审核前不入默认包 |
 | qwerty-learner 的 src/resources/dictionary.ts | 本地 SHA-256 fc3b33cf8c728a69b79e8935a6cfb1aa33f046158e05167d34e288d535db8982 | 仅锁审计入口；380 个本地 JSON 词表未逐文件锁定或取得再分发授权 |
-| Kaikki 当前原始提取包 | 2026-09-02 English Wiktionary dump，网页显示 2026-09-25 提取，压缩包约 2.8 GB | 与 open-dictionary v2.0 的 2025-10-23 谱系不同；未下载、未哈希、不能直接做同义项精确连接 |
+| Kaikki 当前原始全量提取包 | 2026-09-02 English Wiktionary dump，网页显示 2026-09-25 提取，压缩包约 2.8 GB | 与 open-dictionary v2.0 的 2025-10-23 谱系不同；全量未下载、未哈希，不能直接做同义项精确连接。仅上述 34 个逐词小文件已下载并各自记录哈希 |
 
 open-dictionary 的 [v2.0 发行说明](https://github.com/ahpxex/open-dictionary/releases/tag/v2.0)给出词条数、原始快照哈希和非压缩分发文件哈希。[Kaikki 下载页](https://kaikki.org/dictionary/rawdata.html)持续更新，浮动 URL 不构成锁定。初次构建优先取得 v2.0 的 distribution、audit 和其原始快照；若原快照不可取得，Wiktextract 补充只能采用有证据的低置信对齐，不能把新版数据按词头直接并入旧版义项。
 
 ## C. 已完成输入锁定与仍需的发布证据
 
-已启用的五个输入在 sources.lock.json 中有路径/URL、字节数、SHA-256 与许可线索，构建清单回填输入/输出文件哈希。Release 发布前仍要记录构建源码 commit、验证 200 条分层样本并得出 ECDICT 字段级再分发结论；当前清单会明确标记为候选状态。
+已启用的六个词典输入在 sources.lock.json 中有路径/URL、字节数、SHA-256 与许可线索；固定音频清单也有独立字节哈希。构建清单回填词典输入/输出文件哈希。Release 发布前仍要记录构建源码 commit、验证 200 条分层样本、抽查音频署名和真实客户端安装回滚；ECDICT 按维护者选定的署名与权利通知策略处理，逐字段历史追溯不再是单独发布门禁。当前清单会明确标记为候选状态。
 
-7897 与 12334 代理未连通，使用直连取得 v2.0 的校验和、distribution/audit 压缩包及 WordNet 核心 ZIP，并已完成本地全量构建。Kaikki 当前原始提取包约 2.8 GB（解压约 23.9 GB），与 v2.0 的 2025-10-23 谱系不同，受磁盘和对齐证据限制未纳入 0.0.1；同版 audit 提供所需的原义和读音补充。构建产物留在忽略目录，尚未公开发布。
+v2.0 的校验和、distribution/audit 压缩包及 WordNet 核心 ZIP 已取得并完成本地全量构建。Kaikki 当前原始全量包约 2.8 GB（解压约 23.9 GB），与 v2.0 的 2025-10-23 谱系不同，未纳入 0.0.1。仅 34 个高频功能词的独立逐词文件经 12334 代理下载并记录各自哈希，从中提取缺失词性的短义和标签；不与旧义项自动对齐。构建产物留在忽略目录，尚未公开发布。
 
 ## D. 版本更新规则
 

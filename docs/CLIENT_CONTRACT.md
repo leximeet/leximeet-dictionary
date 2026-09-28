@@ -4,7 +4,9 @@
 
 ## 安装与版本检查
 
-客户端只选择一种 `edition.*.json`。先解包到临时目录，校验 edition 引用的 `manifest.json` SHA-256，再逐项校验 `outputs` 字节数和 SHA-256；带发音版还要校验 `audio/manifest.json` 及每个文件的字节数、SHA-256、作者、许可链接和文件页。只接受已实现的 `leximeet.edition.v1`、`leximeet.manifest.v1`、`leximeet.entry.v1`。验证完才原子切换当前只读版本，并保留上一版本用于回滚；校验或迁移失败时保持旧版本可查。用户笔记和单词本不在词包目录，也不随词包覆盖。
+完整包客户端只选择一种 `edition.*.json`。先以固定版本 Release 给出的外层 SHA-256 和 `verify-archive` 等价规则流式检查归档，再解包到临时目录，校验 edition 引用的 `manifest.json` SHA-256、`outputs` 字节数/SHA-256 与 SQLite `quick_check`；带发音版还要校验 `audio/manifest.json` 及每个文件的字节数、SHA-256、作者、许可链接和文件页。只接受已实现的 `leximeet.edition.v1`、`leximeet.manifest.v1`、`leximeet.entry.v1`。验证完才原子切换当前只读版本，并保留上一版本用于回滚；校验或迁移失败时保持旧版本可查。用户笔记和单词本不在词包目录，也不随词包覆盖。
+
+浏览器核心资产使用 `leximeet.core.v1` 的 `core-manifest.json`，其中 `parent_manifest` 固定完整来源清单的哈希，`files` 固定核心 JSONL 与许可材料的哈希，`entry_count` 为实际核心行数。客户端先核对 Release 外层 SHA-256，再逐成员检查路径、类型、大小、哈希、词条 schema 与 ID 唯一性；不得因为核心包只含常用词就跳过许可证。核心包不包含完整 SQLite，也没有与完整词库不同的 `entry_id`。首装时把 JSONL 导入只读 IndexedDB 命名空间，再原子切换命名空间指针。非核心词的按需扩展分片尚未交付，必须显示明确的缺词状态。
 
 旧版本地归档带 `release_status=candidate-needs-license-and-human-review`；当前构建源码改为 `candidate-needs-human-review`，需要在重新全量构建后才会出现在新归档中。这两种候选状态都仅用于验证；正式默认下载入口须在人工和客户端门禁完成后另行标记。客户端不得仅凭文件名 `0.0.1` 判断它已正式发布。建议按[固定版本的 Release 资产方案](DISTRIBUTION.md)下载和安装。
 
@@ -22,9 +24,9 @@ WHERE f.form_key = :normalized_casefold_word
 ORDER BY CASE WHEN f.form_text = :original_word THEN 0 ELSE 1 END, e.headword;
 ~~~
 
-`:normalized_casefold_word` 的规则是 Unicode NFC 后 casefold；原始输入单独保留供排序。两条 SQL 是先后回退，不应对已查到的词头再叠加词形结果。`payload` 为 `leximeet.entry.v1` JSON；前端按 `origin` 区分策展词卡和 ECDICT-only 回退。`ecdict.zh_fallback` 是词条级补充；不可显示在某个 `senses[i]` 下当作已对齐翻译。义项 `labels` 和 `topics` 的 scope 均为 sense，考试 `exam_tags` 是 entry 级来源声称。`legacy_phonetic` 不要标为 IPA；WordNet 候选应在独立区块标为“待对齐概念”。
+`:normalized_casefold_word` 的规则是 Unicode NFC 后 casefold；原始输入单独保留供排序。两条 SQL 是先后回退，不应对已查到的词头再叠加词形结果。`payload` 为 `leximeet.entry.v1` JSON；前端按 `origin` 区分策展词卡和 ECDICT-only 回退。义项数组保留上游顺序和来源定位，词卡默认按 `senses[].display_order` 升序展示：core、common、rare，同优先级时普通词义先于 `name` 专名。这个顺序是展示规则，不能当义项正确性的证明。`ecdict.zh_fallback` 是词条级补充；不可显示在某个 `senses[i]` 下当作已对齐翻译。义项 `labels` 和 `topics` 的 scope 均为 sense，考试 `exam_tags` 是 entry 级来源声称。`legacy_phonetic` 不要标为 IPA；WordNet 候选应在独立区块标为“待对齐概念”。
 
-浏览器插件可将 5,000 词 `core.jsonl.gz` 在安装/更新时流式导入自己的只读 IndexedDB 或等效索引，再按需获取完整扩展包。不要每次打开查词面板都解压完整 JSONL，也不要把公共词典与可写用户单词本放在同一重建事务中。完整 `entries.jsonl.gz` 与 SQLite 的 JSON `payload` 采用相同 entry schema；插件与桌面端可用固定样本比对其语义结果。
+浏览器插件可将独立核心归档中的 5,000 词 `core.jsonl.gz` 在安装/更新时流式导入自己的只读 IndexedDB 或等效索引。不要每次打开查词面板都解压完整 JSONL，也不要把公共词典与可写用户单词本放在同一重建事务中。完整 `entries.jsonl.gz` 与 SQLite 的 JSON `payload` 采用相同 entry schema；插件与桌面端可用固定样本比对其语义结果。扩展词的独立分片尚未实现，不能宣称插件已有 81 万词离线能力。
 
 ## 发音与缓存
 
