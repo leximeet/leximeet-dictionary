@@ -52,19 +52,22 @@ def file_hash(path: Path) -> tuple[int, str]:
 
 
 def generator_state(repository_root: Path) -> dict:
-    """记录构建代码与随包声明所处的 Git 修订，未提交修改显式标为 dirty。"""
+    """记录最近一次改变构建内容的提交，文档合并不应改变词包字节。"""
+    content_paths = ["leximeet_dictionary", "sources", "scripts", "DATA-LICENSE.md",
+                     "notices", "sources.lock.json", "audio.lock.json"]
     try:
         commit = subprocess.check_output(
-            ["git", "-C", str(repository_root), "rev-parse", "HEAD"], text=True, stderr=subprocess.DEVNULL
+            ["git", "-C", str(repository_root), "rev-list", "-1", "HEAD", "--", *content_paths],
+            text=True, stderr=subprocess.DEVNULL
         ).strip()
         changes = subprocess.check_output(
-            ["git", "-C", str(repository_root), "status", "--porcelain", "--untracked-files=all", "--",
-             "leximeet_dictionary", "DATA-LICENSE.md", "notices", "sources.lock.json", "audio.lock.json"],
+            ["git", "-C", str(repository_root), "status", "--porcelain", "--untracked-files=all",
+             "--", *content_paths],
             text=True, stderr=subprocess.DEVNULL
         )
     except (OSError, subprocess.CalledProcessError):
         return {"commit": None, "dirty": True}
-    return {"commit": commit, "dirty": bool(changes.strip())}
+    return {"commit": commit or None, "dirty": bool(changes.strip()) or not commit}
 
 
 def verify_inputs(paths: dict[str, Path], lock_path: Path) -> dict[str, dict]:

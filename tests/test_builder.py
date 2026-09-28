@@ -4,13 +4,14 @@ import csv
 import gzip
 import hashlib
 import json
+import subprocess
 import tempfile
 import tarfile
 import unittest
 import zipfile
 from pathlib import Path
 
-from leximeet_dictionary.builder import build, file_hash, lookup, make_entry, verify_package, wordnet_candidates
+from leximeet_dictionary.builder import build, file_hash, generator_state, lookup, make_entry, verify_package, wordnet_candidates
 from leximeet_dictionary.function_words import SOURCE as FUNCTION_SOURCE
 from leximeet_dictionary.core import verify_core_archive
 from leximeet_dictionary.integrity import verify_content
@@ -37,6 +38,25 @@ def audit(word, entry_id, pos="noun"):
 
 
 class BuilderTests(unittest.TestCase):
+    def test_generator_revision_ignores_docs_only_commits_but_detects_dirty_content(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "leximeet_dictionary").mkdir()
+            (root / "leximeet_dictionary" / "source.py").write_text("version = 1\n")
+            subprocess.run(["git", "init", "-q", str(root)], check=True)
+            subprocess.run(["git", "-C", str(root), "config", "user.name", "Fixture"], check=True)
+            subprocess.run(["git", "-C", str(root), "config", "user.email", "fixture@example.invalid"], check=True)
+            subprocess.run(["git", "-C", str(root), "add", "leximeet_dictionary/source.py"], check=True)
+            subprocess.run(["git", "-C", str(root), "commit", "-qm", "source"], check=True)
+            first = generator_state(root)
+            self.assertFalse(first["dirty"])
+            (root / "README.md").write_text("documentation\n")
+            subprocess.run(["git", "-C", str(root), "add", "README.md"], check=True)
+            subprocess.run(["git", "-C", str(root), "commit", "-qm", "docs"], check=True)
+            self.assertEqual(generator_state(root), first)
+            (root / "leximeet_dictionary" / "source.py").write_text("version = 2\n")
+            self.assertTrue(generator_state(root)["dirty"])
+
     def test_sense_alignment_requires_matching_group(self):
         source = curated("bank", "b")
         wrong = {"groups": [{"pos": "verb", "etymology_id": "et1", "senses": [{"gloss": "wrong"}],

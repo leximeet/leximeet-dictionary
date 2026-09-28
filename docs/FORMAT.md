@@ -12,7 +12,7 @@
 
 无音频版和带发音版分别由 `edition.no-audio.json`、`edition.with-audio.json` 定义，二者共享同一 `manifest.json`、SQLite 和 JSONL。独立浏览器核心资产由 `core-manifest.json` 定义，只含 `core.jsonl.gz`、同版来源清单和许可材料，不含完整 SQLite。带发音版增装 `audio/` 中固定内容哈希与许可元数据的高频录音；其他词仍走按需缓存。清单中的 SHA-256 是安装及回滚校验依据。**首次 0.0.1 构建的稳定 ID 只对固定输入与规则成立；下一次来源升级必须提供显式重定向账本，不能凭现有 UUIDv5 规则声称跨版本自动稳定。**
 
-`manifest.json.generator` 记录构建源码 Git commit 与 `dirty` 状态；候选工作目录可处于 dirty，但正式发布必须从已提交的源码重建，使 `generator.dirty=false`。`release-candidate.json` 回填这个值并给三份外层资产记录 SHA-256。源码 commit 证明生成规则的修订，不代替五个输入文件及音频清单各自的字节哈希。
+`manifest.json.generator` 记录最近一次改变构建代码、固定来源或随包许可内容的 Git commit 与 `dirty` 状态；纯文档提交不改变该值。候选工作目录可处于 dirty，但正式发布必须从已提交的源码重建，使 `generator.dirty=false`。`release-candidate.json` 回填这个值并给三份外层资产记录 SHA-256。源码 commit 证明生成规则的修订，不代替六个输入文件及音频清单各自的字节哈希。
 
 ## 1. 三种不同用途的文件
 

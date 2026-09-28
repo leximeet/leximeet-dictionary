@@ -1,6 +1,6 @@
 # 词遇词包分发与多端接入方案
 
-状态：2026-09-28 的 0.0.1 本地候选。三资产已全量重建、逐个核验并在隔离目录安装抽验；手动候选流水线已写入源码，尚未运行远端 Actions、公开发布 Release，也尚未在词遇桌面端和浏览器插件完成安装、更新与回滚验收。[实际构建命令](BUILD.md)、[客户端数据契约](CLIENT_CONTRACT.md)和[数据说明](../DATA-LICENSE.md)分别记录现状。
+状态：2026-09-28 的 0.0.1 本地候选。三资产已全量重建、逐个核验并在隔离目录安装抽验；手动候选流水线已写入源码，尚未运行远端 Actions、公开发布 Release，也尚未在词遇桌面端和浏览器插件完成安装、更新与回滚验收。[实际构建命令](BUILD.md)、[客户端数据契约](CLIENT_CONTRACT.md)、[维护者交接清单](RELEASE_CHECKLIST.md)和[数据说明](../DATA-LICENSE.md)分别记录现状。
 
 ## 选择：运行时消费 Release，源码开发才使用 Git 引用
 
@@ -43,7 +43,7 @@ flowchart LR
 
 ## 当前 GitHub Actions 能做什么
 
-现有 [`.github/workflows/test.yml`](../.github/workflows/test.yml) 在 `push`/`pull_request` 时运行 Python 3.11 编译与 9 项夹具测试。新增的 [`.github/workflows/candidate.yml`](../.github/workflows/candidate.yml) 只在维护者手动触发时运行：初始化 ECDICT/CMUdict 固定子模块，下载三个固定数据文件，构建器依 `sources.lock.json` 逐文件验哈希；随后全量构建、`verify`、`report`、从固定 `audio.lock.json` 重建录音并在线复查许可、生成并验证三个归档。工作流只授予 `contents: read`，**没有创建 tag、PR 或 Release 的步骤**。新远端目前只有 `LICENSE`；只有维护者将本地完成的版本推到默认分支后，GitHub 才能通过 UI 手动触发这个工作流。[GitHub 手动运行工作流规则](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow)。
+现有 [`.github/workflows/test.yml`](../.github/workflows/test.yml) 在 `push`/`pull_request` 时运行 Python 3.11 编译与 11 项夹具测试。新增的 [`.github/workflows/candidate.yml`](../.github/workflows/candidate.yml) 只在维护者手动触发时运行：初始化 ECDICT/CMUdict 固定子模块，下载三个固定数据文件，构建器依 `sources.lock.json` 逐文件验哈希；随后全量构建、`verify`、`report`、从固定 `audio.lock.json` 重建录音并在线复查许可、生成并验证三个归档。工作流只授予 `contents: read`，**没有创建 tag、PR 或 Release 的步骤**。新远端目前只有 `LICENSE`；只有维护者将本地完成的版本推到默认分支后，GitHub 才能通过 UI 手动触发这个工作流。[GitHub 手动运行工作流规则](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow)。
 
 一次候选工作流会**构建并核验三种资产**，但每次只上传手动选择的 `core`、`no-audio` 或 `with-audio` 其中一种，连同清单和 QA 报告，保留 1 天。这是因为旧版两个完整归档合计约 869 MB，而 [GitHub Actions 当前 Free 计划每仓库 artifact 存储额度为 500 MB](https://docs.github.com/en/actions/reference/limits)；同时上传两版可能超额。正式发布若使用 Release assets，需先完成审核，再由维护者在足够空间的本机或独立 runner 生成并上传三份固定哈希资产。Actions artifact 有保留期，不能作为客户端长期下载 URL；[Release assets](https://docs.github.com/en/rest/releases/assets)才是版本化分发入口。CI 成功不等同于 200 条人工词义复核、音频署名抽查或真实客户端验收。当前工作流只完成本地静态和夹具验证，远端首次运行仍待维护者推送后验证。
 

@@ -56,7 +56,7 @@ python3 -m leximeet_dictionary verify-archive dist/leximeet-dictionary-0.0.1-wit
 
 `dist/` 会得到 `leximeet-dictionary-0.0.1-core.tar.gz`、`leximeet-dictionary-0.0.1-no-audio.tar.gz`、`leximeet-dictionary-0.0.1-with-audio.tar.gz` 和记录三份字节数/SHA-256 的 `release-candidate.json`。核心资产只含高频 `core.jsonl.gz`、完整来源清单、核心清单和许可文本；不含 1 GB 以上的 SQLite。两个完整归档各自可安装，不需要客户端同时下载两版。候选归档的 `release_status` 仍是待审状态；生成归档不会自动推送或发布。
 
-客户端必须从固定版本的 Release 清单读取外层 SHA-256，再运行等价于 `verify-core --sha256 <hash>` 或 `verify-archive --sha256 <hash>` 的检查，拒绝额外、重复、非普通文件和路径逃逸成员。完整包解到**临时目录**后仍要运行 `verify --deep` 与 `verify-audio`，确认 SQLite `quick_check`、词条计数、JSONL 与 SQLite 正文一致、核心选择及引用关系，再原子切换。仅在 `release_status` 经发布审核明确变为正式状态后允许生产客户端自动安装；当前 `candidate-needs-human-review` 只供隔离验收。完整安装边界见[客户端契约](CLIENT_CONTRACT.md)。
+客户端必须从固定版本的 Release 清单读取外层 SHA-256，再运行等价于 `verify-core --sha256 <hash>` 或 `verify-archive --sha256 <hash>` 的检查，拒绝额外、重复、非普通文件和路径逃逸成员。完整包解到**临时目录**后仍要运行 `verify --deep`，带发音版还要运行 `verify-audio`，确认 SQLite `quick_check`、词条计数、JSONL 与 SQLite 正文一致、核心选择及引用关系，再原子切换。仅在 `release_status` 经发布审核明确变为正式状态后允许生产客户端自动安装；当前 `candidate-needs-human-review` 只供隔离验收。完整安装边界见[客户端契约](CLIENT_CONTRACT.md)。
 
 筛选顺序按 ECDICT 原始 `frq`，缺失时才用 `bnc`，并严格匹配 `En-us-<word>.ogg` 等 Commons 文件名；带词性后缀的录音只能进入相同词性。候选 URL 从 audit 提取，但**不是已核权资产**。探索命令 `audio-pack` 可重新请求 Commons `imageinfo` 并形成新候选；正式候选构建使用 `audio-pack-locked`，要求文件内容与 `audio.lock.json` 的固定哈希一致。自动元数据检查尚需抽样人工复核。文件没有通过核验时不进入离线包，UI 应显示无可用录音或调用用户选定的系统 TTS。
 
@@ -78,7 +78,7 @@ python3 -m leximeet_dictionary report --db build/v0.0.1/dictionary.sqlite --out 
 python3 -m unittest discover -s tests -v
 ~~~
 
-SQLite `entries` 支持精确词头及大小写候选，`forms` 仅在没有词头结果时回退；若来源同时存在 `May` 与 `may` 两条记录，完全匹配者排先。实际 v2.0 输入只有小写 `may` 词头时，查询 `May` 也会返回该词条，不会凭大小写捏造新词条。`wordnet_candidates()` 返回尚未对齐的独立候选概念及有向关系，客户端不得将其误显示为某个 open-dictionary 义项已被 WordNet 验证。`qa/quality-report.json` 是自动覆盖和本机热缓存查找基线；`qa/review-sample.csv` 是 200 条分层人工复核工作表，`review_status=pending` 不等于验收通过。
+SQLite `entries` 支持精确词头及大小写候选，`forms` 仅在没有词头结果时回退；若来源同时存在 `May` 与 `may` 两条记录，完全匹配者排先。实际 v2.0 输入只有小写 `may` 词头时，查询 `May` 也会返回该词条，不会凭大小写捏造新词条。`wordnet_candidates()` 返回尚未对齐的独立候选概念及有向关系，客户端不得将其误显示为某个 open-dictionary 义项已被 WordNet 验证。`qa/quality-report.json` 是自动覆盖和本机热缓存查找基线；`qa/review-sample.csv` 是至少 200 条（含功能词）分层人工复核工作表，`review_status=pending` 不等于验收通过。
 
 客户端安装时先把新包放入临时位置，对清单、schema、所有文件哈希及 SQLite 完整性进行校验，再切换只读包指针；校验失败维持上一版。私人单词本、标签、笔记和复习状态在独立存储，公共包不可写。浏览器可消费 `core.jsonl.gz` 的较小高频包；`entries.jsonl.gz` 是完整交换格式，不能在插件启动时一次加载进内存。当前尚未实现插件与桌面端的真实安装/回滚验证，因此不把上述接口契约当成已完成端到端兼容证明。
 
@@ -86,4 +86,4 @@ SQLite `entries` 支持精确词头及大小写候选，`forms` 仅在没有词�
 
 ## 发布门禁
 
-公开发布前还需要：`qa/review-sample.csv` 的 200 条分层人工判断、`qa/audio-review-sample.csv` 的 40 条分层听辨及署名/许可判断，以及真实客户端离线、升级回滚和用户数据隔离测试。ECDICT 按维护者选定的署名与权利通知策略处理，不再作为单独的逐字段核权门禁。当前只可称为 **0.0.1 发布候选**；历史候选的 SHA-256 不能作为新源码的发布校验值。代码许可证、数据层许可证与音频文件许可证见 [DATA-LICENSE.md](../DATA-LICENSE.md)，多端安装见[分发方案](DISTRIBUTION.md)。
+公开发布前还需要：`qa/review-sample.csv` 的至少 200 条分层人工判断、`qa/audio-review-sample.csv` 的 40 条分层听辨及署名/许可判断，以及真实客户端离线、升级回滚和用户数据隔离测试。ECDICT 按维护者选定的署名与权利通知策略处理，不再作为单独的逐字段核权门禁。当前只可称为 **0.0.1 发布候选**；历史候选的 SHA-256 不能作为新源码的发布校验值。代码许可证、数据层许可证与音频文件许可证见 [DATA-LICENSE.md](../DATA-LICENSE.md)，多端安装见[分发方案](DISTRIBUTION.md)。
