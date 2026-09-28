@@ -2,7 +2,7 @@
 
 面向词遇浏览器插件、桌面端及后续客户端的离线词典加工项目。目标是从可追溯的开放来源生成**同一语义契约、按客户端能力分档的词典包**：词卡既能快速显示常用词的可靠释义与音标，也能展开词形、义项、例句和词义关系。
 
-> 当前阶段：已固定五个上游 Git 子模块，并记录 qwerty-learner、DictionaryByGPT4、Aictionary 的审计修订；**尚未生成或发布融合词典、音频包，也尚未接入插件或桌面端**。Git 修订不能代替 Wiktionary dump、open-dictionary Release 等数据文件的下载记录与 SHA-256 校验。
+> 0.0.1 状态：构建器、无音频词包、WordNet 概念表、Commons 音频核权/缓存工具和测试已实现，本地全量构建与自动校验已通过。**当前产物仍是发布候选，尚未接入插件或桌面端，也尚未通过 ECDICT 字段权利和人工语义抽检门禁。**[构建与使用](docs/BUILD.md)说明实际命令，[客户端契约](docs/CLIENT_CONTRACT.md)说明接入规则，[数据许可](DATA-LICENSE.md)说明发行边界。
 
 ## 为什么不直接把五份词典拼成一个 JSON
 
@@ -37,7 +37,7 @@ git submodule update --init
 git submodule status
 ~~~
 
-目前只有来源与契约，没有可执行的加工命令。后续导入源数据时必须把下载地址、版本、日期、字节大小、SHA-256、许可证和署名文本写入构建清单，再运行加工。不要使用浮动的 latest URL 作为可复现构建输入。
+实际构建命令见[构建与使用](docs/BUILD.md)。`sources.lock.json` 已为 v2.0 的 distribution/audit、ECDICT CSV、CMUdict 和 WordNet 2025 ZIP 固定字节数与 SHA-256；构建器在处理前逐文件验证。不要使用浮动的 latest URL 作为可复现构建输入。
 
 ### 为什么暂不把所有参考项目设为子模块
 

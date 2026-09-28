@@ -1,6 +1,16 @@
 # 词典产物格式草案
 
-状态：设计草案，尚无构建器与已发布词包。这里约定**词条语义与来源字段**；字段名称和版本号只有在首轮真实数据导入、客户端试读与许可审计后才能冻结。字段选择、标签归属和实施门禁见 [设计基线](DESIGN.md) 与 [任务文档](TASKS.md)。
+状态：0.0.1 构建器已有可执行的 `leximeet.entry.v1` 和 `leximeet.manifest.v1`；下文的 `v1alpha1` JSON 是早期设计示例，**不是当前实际产物**。实际字段与双版本安装方式以本节、[构建与使用](BUILD.md)和 `leximeet_dictionary/builder.py` 为准。客户端真实试读与发布许可审核仍未完成。
+
+## 0.0.1 已实现的字段契约
+
+一行规范 JSONL 是一个 `entry`，含 `schema_version`、独立 `entry_id`、`headword`、仅供查找的 `lookup_key`、`origin`、`source_entry_id`、`headword_summary_zh`、`memory_hook_zh`、`study_notes_zh`、`forms[]`、`pronunciations[]`、`senses[]`、`ecdict`、`audit_status` 和 `audio_ids[]`。`origin` 为 `curated` 或 `ecdict-fallback`。`ecdict.zh_fallback`/`en_fallback` 始终是词条级原字段；`exam_tags[]` 是来源声称，`frequency_ranks` 保留原 `bnc`/`frq` 名称与正数序位，`legacy_phonetic` 不标 IPA。
+
+`senses[]` 逐条保留 open-dictionary v2.0 的源 `entry_id`、词性、词源组、源 `sense_id` 和组索引，并提供 LexiMeet 自己的 `sense_id`。`english_gloss` 只在**同版 audit** 的词性组、词源组和义项数均对齐时出现，来源标记为 Wiktionary 派生的 audit；中文学习者解释、例句、优先级仍为策展层。`labels[]` 与 `topics[]` 以义项为 scope；未做跨快照义项推断。`pronunciations[]` 区分 `IPA` 与 `ARPABET`，读音地区仅按源标签确定；ECDICT 旧记法在另一字段。
+
+`dictionary.sqlite` 的 `entries` 是词卡正文，`forms` 是词形查询索引，`audio_candidates` 是**待核权线索**，`wordnet_synsets`/`wordnet_lemmas` 是独立概念网络。WordNet 候选查询结果显式标为 `unmapped-headword-candidate`，不装作某个义项的已确认同义词。`audio-candidates.jsonl.gz` 只供在线提供方查线索；词卡的 `audio_ids[]` 在本版为空，录音关联由单独的 `audio/manifest.json` 完成。
+
+无音频版和带发音版分别由 `edition.no-audio.json`、`edition.with-audio.json` 定义，二者共享同一 `manifest.json`、SQLite 和 JSONL。带发音版增装 `audio/` 中经许可元数据审核的高频录音；其他词仍走按需缓存。清单中的 SHA-256 是安装及回滚校验依据。**首次 0.0.1 构建的稳定 ID 只对固定输入与规则成立；下一次来源升级必须提供显式重定向账本，不能凭现有 UUIDv5 规则声称跨版本自动稳定。**
 
 ## 1. 三种不同用途的文件
 

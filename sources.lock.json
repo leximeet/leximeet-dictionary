@@ -56,6 +56,8 @@
       "id": "ecdict-csv",
       "path": "upstream/ecdict/ecdict.csv",
       "sha256": "1a6947e04785db63613a92e14903cdae7954f7e84860b10e68e5c7cbb3f9c3cf",
+      "bytes": 65933428,
+      "license": "ECDICT repository MIT; per-field provenance review pending",
       "hashEvidence": "local",
       "redistributionReview": "pending"
     },
@@ -63,6 +65,8 @@
       "id": "cmudict-dict",
       "path": "upstream/cmudict/cmudict.dict",
       "sha256": "81917843c7f44ce2b094ac63873c2c7a4cf802040792c455ba3ca406891c3d22",
+      "bytes": 3618488,
+      "license": "CMUdict license; see DATA-LICENSE.md",
       "hashEvidence": "local",
       "redistributionReview": "pending"
     },
@@ -71,16 +75,24 @@
       "release": "v2.0",
       "releaseCommit": "53189a610287efb9ce627f9ab93409c639acdc47",
       "url": "https://github.com/ahpxex/open-dictionary/releases/download/v2.0/distribution.jsonl.gz",
-      "sha256": null,
-      "hashEvidence": "not-downloaded",
+      "sha256": "69af69cdc685b5dce465613d1cc8fffb598eb46714f57cf73bd6606c2ceb7e43",
+      "bytes": 97071330,
+      "decompressedSha256": "95026a4b78aa83f1f32481e8ff30ea3f7d942b648b3d6e66ef64ca3a194cb66e",
+      "decompressedBytes": 366537907,
+      "license": "CC BY-SA 4.0",
+      "hashEvidence": "local-and-upstream-SHA256SUMS",
       "redistributionReview": "pending"
     },
     {
       "id": "open-dictionary-v2-audit-jsonl-gz",
       "release": "v2.0",
       "url": "https://github.com/ahpxex/open-dictionary/releases/download/v2.0/audit.jsonl.gz",
-      "sha256": null,
-      "hashEvidence": "not-downloaded",
+      "sha256": "e3eadd2d0029423ef7130e3bb6890e2f6cb316c64c2e935c479fe6dcb872340b",
+      "bytes": 148028969,
+      "decompressedSha256": "1b6a1b82750320491d50d5204236e26295afe3b1b92fd8d37e518ce456a82ab4",
+      "decompressedBytes": 625376982,
+      "license": "CC BY-SA 4.0",
+      "hashEvidence": "local-and-upstream-SHA256SUMS",
       "redistributionReview": "pending"
     },
     {
@@ -94,8 +106,10 @@
       "id": "english-wordnet-2025-core",
       "edition": "2025",
       "url": "https://en-word.net/static/english-wordnet-2025-json.zip",
-      "sha256": null,
-      "hashEvidence": "not-downloaded",
+      "sha256": "7d749f6e2c39e6970e4997839dcf6e42fd281f3c2fae0171d2192bae8cfa4b51",
+      "bytes": 9986555,
+      "license": "CC BY 4.0",
+      "hashEvidence": "local",
       "redistributionReview": "pending"
     },
     {
