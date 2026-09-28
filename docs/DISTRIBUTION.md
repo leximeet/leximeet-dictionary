@@ -27,7 +27,7 @@ flowchart LR
 
 ## 0.0.1 三种独立资产
 
-构建器现在会生成 `leximeet-dictionary-0.0.1-core.tar.gz`、`leximeet-dictionary-0.0.1-no-audio.tar.gz`、`leximeet-dictionary-0.0.1-with-audio.tar.gz` 和记录三者 SHA-256/大小的 `release-candidate.json`。两个完整包共用一套语义 schema；带发音版另含固定清单中的 436 条高频录音。新源码本地候选分别约 18 MB、433 MB、438 MB，单个文件低于 GitHub 当前每资产 2 GiB 上限；在提交构建源码并复跑最终构建前，这些仍是**本地候选而非 GitHub Release**。[GitHub Release 资产限制](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases)。
+构建器现在会生成 `leximeet-dictionary-0.0.1-core.tar.gz`、`leximeet-dictionary-0.0.1-no-audio.tar.gz`、`leximeet-dictionary-0.0.1-with-audio.tar.gz` 和记录三者 SHA-256/大小的 `release-candidate.json`。两个完整包共用一套语义 schema；带发音版另含固定清单中的 436 条高频录音。新源码本地候选分别约 18 MB、433 MB、438 MB，单个文件低于 GitHub 当前每资产 2 GiB 上限；这些是已提交源码生成、可复核的**本地候选，而非 GitHub Release**。[GitHub Release 资产限制](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases)。
 
 独立核心包含约 5,000 词的 `core.jsonl.gz`（新构建原文件约 17.9 MB）、`core-manifest.json`、完整来源 `manifest.json`、`DATA-LICENSE.md` 和 `notices/`。它不含 SQLite 和录音，可供浏览器在安装时流式导入 IndexedDB。核心包的外层 SHA-256、内部文件哈希、schema、词条数、重复 ID 和路径安全均可由 `verify-core` 检查。桌面端选择完整 SQLite；插件端先用核心包，非核心词的扩展分片策略仍是后续工作。两端共享条目语义、来源和版本约束，不要求共享文件格式。
 
@@ -45,7 +45,7 @@ flowchart LR
 
 现有 [`.github/workflows/test.yml`](../.github/workflows/test.yml) 在 `push`/`pull_request` 时运行 Python 3.11 编译与 11 项夹具测试。新增的 [`.github/workflows/candidate.yml`](../.github/workflows/candidate.yml) 只在维护者手动触发时运行：初始化 ECDICT/CMUdict 固定子模块，下载三个固定数据文件，构建器依 `sources.lock.json` 逐文件验哈希；随后全量构建、`verify`、`report`、从固定 `audio.lock.json` 重建录音并在线复查许可、生成并验证三个归档。工作流只授予 `contents: read`，**没有创建 tag、PR 或 Release 的步骤**。新远端目前只有 `LICENSE`；只有维护者将本地完成的版本推到默认分支后，GitHub 才能通过 UI 手动触发这个工作流。[GitHub 手动运行工作流规则](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow)。
 
-一次候选工作流会**构建并核验三种资产**，但每次只上传手动选择的 `core`、`no-audio` 或 `with-audio` 其中一种，连同清单和 QA 报告，保留 1 天。这是因为旧版两个完整归档合计约 869 MB，而 [GitHub Actions 当前 Free 计划每仓库 artifact 存储额度为 500 MB](https://docs.github.com/en/actions/reference/limits)；同时上传两版可能超额。正式发布若使用 Release assets，需先完成审核，再由维护者在足够空间的本机或独立 runner 生成并上传三份固定哈希资产。Actions artifact 有保留期，不能作为客户端长期下载 URL；[Release assets](https://docs.github.com/en/rest/releases/assets)才是版本化分发入口。CI 成功不等同于 200 条人工词义复核、音频署名抽查或真实客户端验收。当前工作流只完成本地静态和夹具验证，远端首次运行仍待维护者推送后验证。
+一次候选工作流会**构建并核验三种资产**，但每次只上传手动选择的 `core`、`no-audio` 或 `with-audio` 其中一种，连同清单和 QA 报告，保留 1 天。这是因为旧版两个完整归档合计约 869 MB，而 [GitHub Actions 当前 Free 计划每仓库 artifact 存储额度为 500 MB](https://docs.github.com/en/actions/reference/limits)；同时上传两版可能超额。正式发布若使用 Release assets，需先完成审核，再由维护者在足够空间的本机或独立 runner 生成并上传三份固定哈希资产。Actions artifact 有保留期，不能作为客户端长期下载 URL；[Release assets](https://docs.github.com/en/rest/releases/assets)才是版本化分发入口。CI 成功不等同于 200 条人工词义复核、音频署名抽查或真实客户端验收。当前工作流已在本地完成解析、夹具及等价的全量构建/校验；远端首次运行仍待维护者推送后验证。
 
 ## 仓库重建后的本地迁移
 

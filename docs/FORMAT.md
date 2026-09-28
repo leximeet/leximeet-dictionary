@@ -1,6 +1,6 @@
 # 词典产物格式草案
 
-状态：0.0.1 构建器已有可执行的 `leximeet.entry.v1`、`leximeet.manifest.v1` 和 `leximeet.core.v1`；下文的 `v1alpha1` JSON 是早期设计示例，**不是当前实际产物**。实际字段与三种独立归档以本节、[构建与使用](BUILD.md)和 `leximeet_dictionary/builder.py` 为准。新源码的全量归档、人工抽检与客户端真实试读仍未完成。
+状态：0.0.1 构建器已有可执行的 `leximeet.entry.v1`、`leximeet.manifest.v1` 和 `leximeet.core.v1`；下文的 `v1alpha1` JSON 是早期设计示例，**不是当前实际产物**。实际字段与三种独立归档以本节、[构建与使用](BUILD.md)和 `leximeet_dictionary/builder.py` 为准。全量归档与参考安装路径已验证；人工抽检和客户端真实试读仍未完成。
 
 ## 0.0.1 已实现的字段契约
 

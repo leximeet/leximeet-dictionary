@@ -12,6 +12,14 @@
 
 三个归档互相独立。客户端应该锁定明确版本和外层 SHA-256，从固定版本的 GitHub Release 下载；不把词典 Git 仓库当运行时子模块，也不跟随 `latest`。完整语义和私有用户数据边界见 [CLIENT_CONTRACT.md](CLIENT_CONTRACT.md)。本地 `dist/` 与 `build/` 已被忽略，维护者推送源码不会自动上传这些文件。
 
+本地候选的生成修订为 `94fd055b186b8c0d263aca7c7388e8b7dc1fabc8`，`generator.dirty=false`。下面的 SHA-256 仅对应当前待审候选；人工审校若要求改数据或发布状态，必须重新构建并以新哈希替换。
+
+| 本地资产 | 字节数 | SHA-256 |
+| --- | ---: | --- |
+| core | 17,963,726 | `47b3501ad4d0fcd9c894637820ef7b90bdca8e30c8b5e06d9ca6f7e2f7a92347` |
+| no-audio | 433,452,931 | `0ba53f6e5b0ef7d2271ad1eb6850bc6f6e913d960b959dd8f995b47b9903ab07` |
+| with-audio | 437,918,827 | `e7161a5d6428da4476eb5c1f3a8e86a0e120771d7c18f55539bec60b1662a29e` |
+
 当前自动验收：11 项夹具、全量六输入哈希、811,092 词条的 JSONL/SQLite 逐行深度校验、三归档外层/成员验证、两种完整包及核心包的隔离安装抽验。固定 34 个功能词补了 161 条独立英文义项；436 条离线 Commons 录音有文件哈希和元数据。第二次全量构建的 JSONL、SQLite、manifest 与第一次字节一致；源码修订记录采用最近一次改变构建内容的 Git 提交，纯文档提交或合并不应改变词包。具体字节数与 SHA-256 以本地最终 `dist/final/release-candidate.json` 为准，不能使用历史迭代记录里的旧候选哈希。
 
 ## 正式 Release 尚需的证据
