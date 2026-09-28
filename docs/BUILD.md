@@ -6,7 +6,7 @@
 
 ## 固定输入
 
-先执行 `git submodule update --init`。六个词典输入的准确 SHA-256、字节数、URL 和版本见仓库根目录 `sources.lock.json`；构建器会逐文件核对。第六个输入是已提交的 `sources/function-words.jsonl`，仅含固定逐词 Kaikki 文件抽出的 34 个功能词短义与标签。尤其注意：`upstream/open-dictionary` 的 Git commit **不是** v2.0 Release 数据文件；`upstream/wiktextract` 也只是提取工具，不是英语 dump 本身。
+先执行 `git submodule update --init`。六个上游词典输入的准确 SHA-256、字节数、URL 和版本见仓库根目录 `sources.lock.json`；构建器会逐文件核对。第六个输入是已提交的 `sources/function-words.jsonl`，仅含固定逐词 Kaikki 文件抽出的 34 个功能词短义与标签。词遇另有 `editorial/corrections.json` 自有审校层，构建器把其 SHA-256 记录在 manifest 并随三个归档分发，只有目标 ID 和旧值精确匹配时才修订。尤其注意：`upstream/open-dictionary` 的 Git commit **不是** v2.0 Release 数据文件；`upstream/wiktextract` 也只是提取工具，不是英语 dump 本身。
 
 ~~~sh
 mkdir -p downloads/open-dictionary/v2.0 downloads/english-wordnet/2025
@@ -20,6 +20,7 @@ python3 -m leximeet_dictionary build \
   --cmudict upstream/cmudict/cmudict.dict \
   --wordnet downloads/english-wordnet/2025/english-wordnet-2025-json.zip \
   --function-words sources/function-words.jsonl \
+  --editorial editorial/corrections.json \
   --out build/v0.0.1
 python3 -m leximeet_dictionary verify build/v0.0.1 --deep
 ~~~

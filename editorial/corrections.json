@@ -1,0 +1,73 @@
+{
+  "schema_version": "leximeet.editorial.v1",
+  "corrections": [
+    {
+      "id": "a-article-zh",
+      "entry_id": "0bf61087-c5f9-55bd-adfc-a5ad8f634317",
+      "headword": "a",
+      "display_zh": "不定冠词，用在单数可数名词前；另可表示字母 A 或数量一，须按语境区分。",
+      "evidence": ["https://dictionary.cambridge.org/us/grammar/british-grammar/a-and-the"],
+      "revisions": [
+        {"target": "sense", "sense_id": "11b5c8e9-c3e9-50a6-93fe-20b98972970c", "field": "learner_explanation_zh", "expected": null, "value": "不定冠词，放在单数可数名词前，表示尚未确定是哪一个的人或事物。"},
+        {"target": "sense", "sense_id": "a3e9f1e9-719e-5b30-8c4c-874a3beaf883", "field": "learner_explanation_zh", "expected": null, "value": "与 dozen、hundred 等数量词连用时表示“一”。"}
+      ]
+    },
+    {
+      "id": "the-article-zh",
+      "entry_id": "64c0118d-e95f-5ed1-b4a9-b289aacdab79",
+      "headword": "the",
+      "display_zh": "定冠词，指已提及、双方已知或上下文可以确定的人或事物；另有副词等用法。",
+      "evidence": ["https://dictionary.cambridge.org/us/dictionary/english/the"],
+      "revisions": [
+        {"target": "sense", "sense_id": "63c7298a-231b-5c1a-8b56-224d45b0c540", "field": "learner_explanation_zh", "expected": null, "value": "定冠词，放在名词短语前，指前文已经提到或随后明确指定的人或事物。"},
+        {"target": "sense", "sense_id": "84c22a5a-d785-5deb-b886-5d7242430d28", "field": "learner_explanation_zh", "expected": null, "value": "定冠词，放在名词短语前，指双方根据共同背景能够确定的人或事物，也可指独一无二的对象。"}
+      ]
+    },
+    {
+      "id": "hell-chicken-dinosaur-zh",
+      "entry_id": "001bcfbf-3855-51ed-827a-b188f4a5dde9",
+      "headword": "hell chicken",
+      "display_zh": "Anzu wyliei 的俗称，指一种已灭绝的兽脚类恐龙。",
+      "evidence": ["https://www.si.edu/newsdesk/factsheets/feathered-dinosaur-anzu-wyliei"],
+      "revisions": [
+        {"target": "entry", "field": "headword_summary_zh", "expected": "“hell chicken”是对已灭绝的兽脚类恐龙阿祖翼龙（Anzu wyliei）的俗称。", "value": "“hell chicken”是已灭绝的兽脚类恐龙 Anzu wyliei 的俗称。"},
+        {"target": "sense", "sense_id": "1cdd2601-729b-5d2d-ad06-f4515a065153", "field": "learner_explanation_zh", "expected": "指阿祖翼龙（Anzu wyliei），一种已经灭绝的兽脚类恐龙。这个俗称把它想象成一只体形很大的、来自“地狱”的鸡，强调其外形奇特而令人印象深刻。", "value": "指 Anzu wyliei，一种已灭绝的兽脚类恐龙；俗称与它鸟类般的外形及发现地有关。"}
+      ]
+    },
+    {
+      "id": "regressively-adverb-zh",
+      "entry_id": "00001ed1-7bac-57b8-9350-4f4989cd262d",
+      "headword": "regressively",
+      "display_zh": "副词：以倒退的方式；谈税收时可指以累退方式。",
+      "evidence": ["https://dictionary.cambridge.org/us/dictionary/english/regressively"]
+    },
+    {
+      "id": "scrumhalfs-rugby-zh",
+      "entry_id": "00019e21-db3c-524c-9eca-dd4c09c412e6",
+      "headword": "scrumhalfs",
+      "display_zh": "scrumhalf 的复数：英式橄榄球中司职 9 号位的后卫球员，不是前锋。",
+      "evidence": ["https://passport.world.rugby/coaching/functional-role-analysis/backs-scrum-half-half-back/"]
+    },
+    {
+      "id": "ltd-company-suffix-zh",
+      "entry_id": "cccf04bf-8993-579a-a3c3-a9bae5e7f5da",
+      "headword": "Ltd",
+      "display_zh": "公司名称后的 Limited 缩写，表示有限公司；须与形容词 limited 区分。",
+      "evidence": ["https://dictionary.cambridge.org/us/dictionary/english/ltd"]
+    },
+    {
+      "id": "ii-roman-numeral-zh",
+      "entry_id": "ee9e7313-0d5b-5318-a525-6cfea1b85eb0",
+      "headword": "ii",
+      "display_zh": "小写罗马数字 ii 可表示二；此源词条还收录 Image Intensification 的缩写义，须看上下文。",
+      "evidence": ["https://www.unicode.org/charts/nameslist/n_2150.html"]
+    },
+    {
+      "id": "uvc-ultraviolet-zh",
+      "entry_id": "000d54d9-322c-561b-9637-276ae62f389d",
+      "headword": "UVC",
+      "display_zh": "可指紫外线 C 波段（UV-C）；原 ECDICT 还收录 Universal Contact 的缩写义，须按领域区分。",
+      "evidence": ["https://www.cdc.gov/radiation-health/data-research/facts-stats/ultraviolet-radiation.html"]
+    }
+  ]
+}

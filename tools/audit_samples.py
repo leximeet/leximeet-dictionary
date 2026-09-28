@@ -54,6 +54,7 @@ def audit_meanings(db_path: Path, sample_path: Path) -> tuple[list[dict], Counte
                 "english_gloss_preview": " | ".join((s["english_gloss"] or "")[:180] for s in first),
                 "learner_zh_preview": " | ".join((s["learner_explanation_zh"] or "")[:180] for s in first),
                 "zh_fallback": (item["ecdict"]["zh_fallback"] or "")[:180],
+                "editorial_display_zh": (item.get("editorial") or {}).get("display_zh") or "",
             }
             problems = [name for name, value in expected.items() if row[name] != value]
             if any(label.get("scope") != "sense" for sense in senses for label in sense["labels"] + sense["topics"]):
@@ -71,10 +72,14 @@ def audit_meanings(db_path: Path, sample_path: Path) -> tuple[list[dict], Counte
             concern = EDITORIAL_CONCERNS.get(item["headword"], "")
             if concern:
                 counts["editorial_concern"] += 1
+            if item.get("editorial"):
+                counts["editorial_corrected"] += 1
             row["machine_consistency"] = "pass"
-            row["editorial_triage"] = "needs-correction-or-source-check" if concern else (
+            row["editorial_triage"] = "corrected-in-leximeet-layer" if item.get("editorial") else (
+                "needs-source-check" if concern else
                 "entry-level-fallback-only" if not senses else "preview-screened")
-            row["editorial_observation"] = concern or (
+            row["editorial_observation"] = ((concern + "；已提供词遇独立审校显示，原字段保留。")
+                                            if concern and item.get("editorial") else concern) or (
                 "仅有 ECDICT 词条级释义，不能检查逐义项中英对应。" if not senses else
                 "已检查抽样预览与词包字段；未逐义项对照独立词典。")
             row["human_semantic_decision"] = "pending"

@@ -51,10 +51,10 @@ def export(db_path: Path, out_path: Path) -> dict:
                 stream.write(f"# LexiMeet {cell(version)} 全量词条与释义\n\n")
                 stream.write("本表由已生成的 `dictionary.sqlite` 导出；同形异义词分别保留词条 ID。")
                 stream.write("逐义项列中的中英文仅按源字段呈现；ECDICT 中文/英文是**词条级回退**，")
-                stream.write("并未与左侧义项自动对齐。空白表示该来源没有提供，不表示该词无意义。")
+                stream.write("并未与左侧义项自动对齐。词遇审校显示列是有证据的独立修订，原回退仍保留。空白表示该来源没有提供，不表示该词无意义。")
                 stream.write("本文件很大，阅读或检索时建议分块打开；客户端请使用 SQLite 或 JSONL 包。\n\n")
-                stream.write("| 序号 | 词头 | 来源层 | 逐义项释义 | ECDICT 中文回退 | ECDICT 英文回退 | 学习者总览 | 词条 ID |\n")
-                stream.write("| ---: | --- | --- | --- | --- | --- | --- | --- |\n")
+                stream.write("| 序号 | 词头 | 来源层 | 逐义项释义 | 词遇审校显示 | ECDICT 中文回退 | ECDICT 英文回退 | 学习者总览 | 词条 ID |\n")
+                stream.write("| ---: | --- | --- | --- | --- | --- | --- | --- | --- |\n")
                 cursor = db.execute("SELECT payload FROM entries ORDER BY lookup_key, headword, entry_id")
                 for (payload,) in cursor:
                     entry = json.loads(payload)
@@ -66,6 +66,7 @@ def export(db_path: Path, out_path: Path) -> dict:
                     if not senses and not ecdict.get("zh_fallback") and not ecdict.get("en_fallback"):
                         stats["entries_without_written_definition"] += 1
                     row = (stats["entries"], entry["headword"], entry["origin"], senses_cell(senses),
+                           (entry.get("editorial") or {}).get("display_zh"),
                            ecdict.get("zh_fallback"), ecdict.get("en_fallback"),
                            entry.get("headword_summary_zh"), entry["entry_id"])
                     stream.write("| " + " | ".join(cell(value) if index != 3 else value

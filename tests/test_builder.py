@@ -11,7 +11,8 @@ import unittest
 import zipfile
 from pathlib import Path
 
-from leximeet_dictionary.builder import build, file_hash, generator_state, lookup, make_entry, verify_package, wordnet_candidates
+from leximeet_dictionary.builder import build, file_hash, generator_state, lookup, make_entry, stable_id, verify_package, wordnet_candidates
+from leximeet_dictionary.editorial import apply_correction, load_corrections
 from leximeet_dictionary.function_words import SOURCE as FUNCTION_SOURCE
 from leximeet_dictionary.core import verify_core_archive
 from leximeet_dictionary.integrity import verify_content
@@ -38,6 +39,15 @@ def audit(word, entry_id, pos="noun"):
 
 
 class BuilderTests(unittest.TestCase):
+    def test_editorial_rejects_stale_source_fields(self):
+        entry, _ = make_entry(curated("bank", "b"), None, "bank", None, {})
+        correction = {"id": "bank-example", "entry_id": entry["entry_id"], "headword": "bank",
+                      "evidence": ["https://example.invalid/bank"],
+                      "revisions": [{"target": "entry", "field": "headword_summary_zh",
+                                     "expected": "已过期的旧字段", "value": "审校摘要"}]}
+        with self.assertRaisesRegex(ValueError, "原字段变化"):
+            apply_correction(entry, correction)
+
     def test_generator_revision_ignores_docs_only_commits_but_detects_dirty_content(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
@@ -148,20 +158,32 @@ class BuilderTests(unittest.TestCase):
                     "senses": [{"sense_index": 0, "glosses": ["The definite article"],
                                 "tags": [], "topics": []}]}]}) + "\n", encoding="utf-8")
             paths["wiktextract-function-words"] = supplement_path
+            editorial_path = root / "corrections.json"
+            editorial_path.write_text(json.dumps({"schema_version": "leximeet.editorial.v1",
+                "corrections": [{"id": "may-example", "entry_id": stable_id("open", "may-verb"),
+                                 "headword": "may", "display_zh": "表示许可",
+                                 "evidence": ["https://example.invalid/may"],
+                                 "revisions": [{"target": "entry", "field": "headword_summary_zh",
+                                                "expected": "学习者摘要", "value": "可用于表达许可"}]}]}), encoding="utf-8")
+            self.assertEqual(len(load_corrections(editorial_path)), 1)
             lock = root / "lock.json"
             lock.write_text(json.dumps({"artifacts": [{"id": name, "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
                                                         "bytes": path.stat().st_size} for name, path in paths.items()]}))
             output = root / "out"
-            manifest = build(paths, lock, output, core_size=2)
-            second = build(paths, lock, root / "out-again", core_size=2)
+            manifest = build(paths, lock, output, core_size=2, editorial_path=editorial_path)
+            second = build(paths, lock, root / "out-again", core_size=2, editorial_path=editorial_path)
             self.assertEqual(manifest["release_status"], "candidate-needs-human-review")
             self.assertEqual(manifest["outputs"], second["outputs"])
             self.assertEqual(manifest["counts"]["total_entries"], 4)
             self.assertEqual(manifest["counts"]["function_word_senses"], 1)
             self.assertEqual(manifest["counts"]["audit_aligned"], 2)
+            self.assertEqual(manifest["counts"]["editorial_entries"], 1)
+            self.assertEqual(manifest["counts"]["editorial_revisions"], 1)
+            self.assertIn("editorial/corrections.json", manifest["outputs"])
             self.assertEqual(len(lookup(output / "dictionary.sqlite", "May")), 2)
             self.assertEqual(lookup(output / "dictionary.sqlite", "fallback")[0]["origin"], "ecdict-fallback")
             self.assertEqual(lookup(output / "dictionary.sqlite", "the")[0]["senses"][0]["pos"], "article")
+            self.assertEqual(lookup(output / "dictionary.sqlite", "may")[0]["editorial"]["display_zh"], "表示许可")
             self.assertEqual(lookup(output / "dictionary.sqlite", "mays")[0]["headword"], "may")
             self.assertEqual(wordnet_candidates(output / "dictionary.sqlite", "may")[0]["mapping_status"], "unmapped-headword-candidate")
             verify_package(output)
@@ -194,6 +216,7 @@ class BuilderTests(unittest.TestCase):
             core_asset = next(item for item in first_packages["artifacts"] if item["edition"] == "core")
             core_manifest = verify_core_archive(core_archive, core_asset["sha256"])
             self.assertEqual(core_manifest["entry_count"], 2)
+            self.assertIn("editorial/corrections.json", core_manifest["files"])
             with tarfile.open(core_archive, "r:gz") as archive:
                 self.assertFalse(any(item.name.endswith("dictionary.sqlite") for item in archive))
                 self.assertTrue(any(item.name.endswith("DATA-LICENSE.md") for item in archive))

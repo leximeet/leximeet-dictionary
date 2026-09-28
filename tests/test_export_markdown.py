@@ -19,7 +19,8 @@ class ExportMarkdownTests(unittest.TestCase):
                 db.execute("INSERT INTO metadata VALUES ('dictionary_version', '0.0.1')")
                 db.execute("CREATE TABLE entries(entry_id TEXT PRIMARY KEY, headword TEXT, lookup_key TEXT, payload TEXT)")
                 curated = {"entry_id": "id-1", "headword": "A|B", "origin": "curated",
-                           "headword_summary_zh": "总览", "ecdict": {"zh_fallback": "词条级\n中文", "en_fallback": ""},
+                           "headword_summary_zh": "总览", "editorial": {"display_zh": "审校词义"},
+                           "ecdict": {"zh_fallback": "词条级\n中文", "en_fallback": ""},
                            "senses": [
                                {"display_order": 1, "pos": "verb", "english_gloss": "second",
                                 "short_gloss": "第二", "learner_explanation_zh": "第二解释"},
@@ -42,6 +43,7 @@ class ExportMarkdownTests(unittest.TestCase):
             self.assertIn("first &#124; &lt;literal&gt;", content)
             self.assertLess(content.index("1. noun"), content.index("2. verb"))
             self.assertIn("词条级<br>中文", content)
+            self.assertIn("| 审校词义 | 词条级<br>中文 |", content)
             self.assertIn("id-2", content)
             self.assertTrue(out.with_suffix(".stats.json").is_file())
 

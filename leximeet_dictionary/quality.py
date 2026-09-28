@@ -45,6 +45,7 @@ def report(db_path: Path, out: Path) -> dict:
                                 "english_gloss_preview": " | ".join((s["english_gloss"] or "")[:180] for s in first_senses),
                                 "learner_zh_preview": " | ".join((s["learner_explanation_zh"] or "")[:180] for s in first_senses),
                                 "zh_fallback": (item["ecdict"]["zh_fallback"] or "")[:180],
+                                "editorial_display_zh": (item.get("editorial") or {}).get("display_zh") or "",
                                 "ipa_preview": " | ".join(ipa),
                                 "labels_topics_preview": " | ".join(
                                     ",".join(label["code"] for label in s["labels"] + s["topics"])[:120]
@@ -76,6 +77,8 @@ def report(db_path: Path, out: Path) -> dict:
                                   "source_entry_id": item["source_entry_id"], "sense_count": len(item["senses"])})
             if item["ecdict"]["zh_fallback"]:
                 counts["entries_with_ecdict_zh"] += 1
+            if item.get("editorial"):
+                counts["entries_with_editorial"] += 1
             if item["ecdict"]["exam_tags"]:
                 counts["entries_with_exam_assertion"] += 1
             if any(p["notation"] == "IPA" for p in item["pronunciations"]):

@@ -19,6 +19,7 @@ def parser() -> argparse.ArgumentParser:
     build_cmd.add_argument("--cmudict", type=Path, required=True)
     build_cmd.add_argument("--wordnet", type=Path, required=True)
     build_cmd.add_argument("--function-words", type=Path, default=Path("sources/function-words.jsonl"))
+    build_cmd.add_argument("--editorial", type=Path, default=Path("editorial/corrections.json"))
     build_cmd.add_argument("--lock", type=Path, default=Path("sources.lock.json"))
     build_cmd.add_argument("--out", type=Path, required=True)
     build_cmd.add_argument("--core-size", type=int, default=5000)
@@ -78,7 +79,7 @@ def main() -> None:
             "english-wordnet-2025-core": args.wordnet,
             "wiktextract-function-words": args.function_words,
         }
-        result = build(inputs, args.lock, args.out, args.core_size)
+        result = build(inputs, args.lock, args.out, args.core_size, args.editorial)
     elif args.command == "lookup":
         result = {"entries": lookup(args.db, args.word)}
         if args.wordnet:

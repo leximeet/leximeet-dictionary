@@ -16,6 +16,7 @@ from collections import Counter, defaultdict
 from contextlib import closing
 from pathlib import Path
 
+from .editorial import apply_correction, load_corrections
 from .function_words import SOURCE as FUNCTION_SOURCE, append_missing_pos, load_supplement
 
 SCHEMA = "leximeet.entry.v1"
@@ -53,7 +54,7 @@ def file_hash(path: Path) -> tuple[int, str]:
 
 def generator_state(repository_root: Path) -> dict:
     """记录最近一次改变构建内容的提交，文档合并不应改变词包字节。"""
-    content_paths = ["leximeet_dictionary", "sources", "scripts", "DATA-LICENSE.md",
+    content_paths = ["leximeet_dictionary", "sources", "editorial", "scripts", "DATA-LICENSE.md",
                      "notices", "sources.lock.json", "audio.lock.json"]
     try:
         commit = subprocess.check_output(
@@ -334,9 +335,16 @@ def add_wordnet(db: sqlite3.Connection, archive_path: Path) -> tuple[int, int]:
     return synsets, lemmas
 
 
-def build(paths: dict[str, Path], lock_path: Path, out: Path, core_size: int = 5000) -> dict:
+def build(paths: dict[str, Path], lock_path: Path, out: Path, core_size: int = 5000,
+          editorial_path: Path | None = None) -> dict:
     out.mkdir(parents=True, exist_ok=True)
     inputs = verify_inputs(paths, lock_path)
+    corrections = load_corrections(editorial_path) if editorial_path else {}
+    if editorial_path:
+        size, sha256 = file_hash(editorial_path)
+        inputs["leximeet-editorial-0.0.1"] = {"bytes": size, "sha256": sha256,
+                                                "url": None, "license": "CC BY-SA 4.0"}
+    applied_corrections: set[str] = set()
     function_words = load_supplement(paths["wiktextract-function-words"])
     scratch_path = out / "scratch.sqlite"
     db_path = out / "dictionary.sqlite"
@@ -363,6 +371,10 @@ def build(paths: dict[str, Path], lock_path: Path, out: Path, core_size: int = 5
                 entry, audio = make_entry(curated, json.loads(audit_row[0]) if audit_row else None,
                                           word, ecdict_row[0] if ecdict_row else None, cmu,
                                           function_words.get(word))
+                if word in corrections:
+                    counts["editorial_revisions"] += apply_correction(entry, corrections[word])
+                    counts["editorial_entries"] += 1
+                    applied_corrections.add(word)
                 add_entry(dictionary, entry, audio)
                 counts["curated_entries"] += 1
                 added = sum(sense["source_ref"]["source"] == FUNCTION_SOURCE for sense in entry["senses"])
@@ -376,6 +388,10 @@ def build(paths: dict[str, Path], lock_path: Path, out: Path, core_size: int = 5
         scratch.commit()
         for word, payload in scratch.execute("SELECT word,payload FROM ecdict WHERE used=0 ORDER BY word"):
             entry, _ = make_entry(None, None, word, payload, cmu, function_words.get(word))
+            if word in corrections:
+                counts["editorial_revisions"] += apply_correction(entry, corrections[word])
+                counts["editorial_entries"] += 1
+                applied_corrections.add(word)
             add_entry(dictionary, entry, [])
             counts["ecdict_only_entries"] += 1
             added = sum(sense["source_ref"]["source"] == FUNCTION_SOURCE for sense in entry["senses"])
@@ -384,6 +400,8 @@ def build(paths: dict[str, Path], lock_path: Path, out: Path, core_size: int = 5
             if counts["ecdict_only_entries"] % 10000 == 0:
                 dictionary.commit()
         dictionary.commit()
+        if applied_corrections != set(corrections):
+            raise ValueError(f"词遇审校目标词条缺失：{sorted(set(corrections) - applied_corrections)}")
         counts["wordnet_synsets"], counts["wordnet_lemma_senses"] = add_wordnet(dictionary, paths["english-wordnet-2025-core"])
         counts["total_entries"] = counts["curated_entries"] + counts["ecdict_only_entries"]
         counts["audio_candidates"] = dictionary.execute("SELECT count(*) FROM audio_candidates").fetchone()[0]
@@ -407,6 +425,11 @@ def build(paths: dict[str, Path], lock_path: Path, out: Path, core_size: int = 5
             destination = notices_out / source.name
             shutil.copyfile(source, destination)
             files[f"notices/{source.name}"] = file_hash(destination)
+    if editorial_path:
+        editorial_out = out / "editorial"
+        editorial_out.mkdir(exist_ok=True)
+        shutil.copyfile(editorial_path, editorial_out / "corrections.json")
+        files["editorial/corrections.json"] = file_hash(editorial_out / "corrections.json")
     shutil.copyfile(repository_root / "DATA-LICENSE.md", out / "DATA-LICENSE.md")
     files["DATA-LICENSE.md"] = file_hash(out / "DATA-LICENSE.md")
     manifest = {

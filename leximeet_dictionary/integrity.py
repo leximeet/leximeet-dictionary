@@ -10,15 +10,18 @@ from itertools import zip_longest
 from pathlib import Path
 
 from .builder import SCHEMA, canonical, lookup_key, verify_package
+from .editorial import SOURCE as EDITORIAL_SOURCE, load_corrections
 from .function_words import SOURCE as FUNCTION_SOURCE
 
 
 def verify_content(root: Path) -> dict:
     """逐行比对 JSONL 与 SQLite，并确认核心分片和引用关系；不修改词包。"""
     manifest = verify_package(root)
+    editorial_file = root / "editorial" / "corrections.json"
+    corrections = load_corrections(editorial_file) if editorial_file.exists() else {}
     counts = {"entries": 0, "curated": 0, "fallback": 0, "senses": 0, "core": 0,
               "function_word_entries": 0, "function_word_senses": 0,
-              "audio_candidates": 0}
+              "audio_candidates": 0, "editorial_entries": 0, "editorial_revisions": 0}
     sense_ids: set[str] = set()
     with closing(sqlite3.connect(f"file:{root / 'dictionary.sqlite'}?mode=ro", uri=True)) as db:
         rows = db.execute("SELECT payload FROM entries ORDER BY lookup_key,headword,entry_id")
@@ -30,6 +33,32 @@ def verify_content(root: Path) -> dict:
                 if (entry.get("schema_version") != SCHEMA or not entry.get("entry_id") or
                         not entry.get("headword") or entry.get("lookup_key") != lookup_key(entry["headword"])):
                     raise ValueError(f"词条基础字段无效：{entry.get('entry_id')}")
+                correction = corrections.get(entry["headword"])
+                editorial = entry.get("editorial")
+                if correction:
+                    if (not editorial or editorial.get("source") != EDITORIAL_SOURCE or
+                            editorial.get("correction_id") != correction["id"] or
+                            editorial.get("display_zh") != correction.get("display_zh") or
+                            editorial.get("evidence") != correction["evidence"] or
+                            entry["entry_id"] != correction["entry_id"]):
+                        raise ValueError(f"词遇审校记录与词条不一致：{entry['headword']}")
+                    revisions = editorial.get("revisions", [])
+                    if len(revisions) != len(correction.get("revisions", [])):
+                        raise ValueError(f"词遇审校修订数不一致：{entry['headword']}")
+                    for actual, expected_revision in zip(revisions, correction.get("revisions", [])):
+                        target = entry if expected_revision["target"] == "entry" else next(
+                            (sense for sense in entry["senses"] if sense["sense_id"] == expected_revision["sense_id"]), None)
+                        if (target is None or actual.get("target") != expected_revision["target"] or
+                                actual.get("field") != expected_revision["field"] or
+                                actual.get("sense_id") != expected_revision.get("sense_id") or
+                                actual.get("original") != expected_revision["expected"] or
+                                actual.get("replacement") != expected_revision["value"] or
+                                target.get(expected_revision["field"]) != expected_revision["value"]):
+                            raise ValueError(f"词遇审校字段与证据不一致：{entry['headword']}")
+                    counts["editorial_entries"] += 1
+                    counts["editorial_revisions"] += len(revisions)
+                elif editorial:
+                    raise ValueError(f"词条含未登记的审校信息：{entry['headword']}")
                 origin = entry.get("origin")
                 if origin == "curated":
                     counts["curated"] += 1
@@ -90,4 +119,7 @@ def verify_content(root: Path) -> dict:
         expected["function_word_senses"]
     ):
         raise ValueError("深度校验计数与清单不符")
+    if (counts["editorial_entries"], counts["editorial_revisions"]) != (
+        expected.get("editorial_entries", 0), expected.get("editorial_revisions", 0)) or counts["editorial_entries"] != len(corrections):
+        raise ValueError("词遇审校修订数量与清单不符")
     return counts

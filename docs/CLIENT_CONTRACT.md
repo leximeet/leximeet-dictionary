@@ -8,7 +8,7 @@
 
 浏览器核心资产使用 `leximeet.core.v1` 的 `core-manifest.json`，其中 `parent_manifest` 固定完整来源清单的哈希，`files` 固定核心 JSONL 与许可材料的哈希，`entry_count` 为实际核心行数。客户端先核对 Release 外层 SHA-256，再逐成员检查路径、类型、大小、哈希、词条 schema 与 ID 唯一性；不得因为核心包只含常用词就跳过许可证。核心包不包含完整 SQLite，也没有与完整词库不同的 `entry_id`。首装时把 JSONL 导入只读 IndexedDB 命名空间，再原子切换命名空间指针。非核心词的按需扩展分片尚未交付，必须显示明确的缺词状态。
 
-当前本地归档带 `release_status=candidate-needs-human-review`，仅用于隔离验证；正式默认下载入口须在人工和客户端门禁完成后另行标记。客户端不得仅凭文件名 `0.0.1` 判断它已正式发布。建议按[固定版本的 Release 资产方案](DISTRIBUTION.md)下载和安装。
+当前本地归档带 `release_status=candidate-needs-human-review`，可用于消费端集成开发与隔离验证；正式默认下载入口须在词典自身人工复核完成后另行标记。客户端不得仅凭文件名 `0.0.1` 判断它已正式发布。建议按[固定版本的 Release 资产方案](DISTRIBUTION.md)下载和安装。
 
 ## 查询
 
@@ -27,6 +27,8 @@ ORDER BY CASE WHEN f.form_text = :original_word THEN 0 ELSE 1 END, e.headword;
 `:normalized_casefold_word` 的规则是 Unicode NFC 后 casefold；原始输入单独保留供排序。两条 SQL 是先后回退，不应对已查到的词头再叠加词形结果。`payload` 为 `leximeet.entry.v1` JSON；前端按 `origin` 区分策展词卡和 ECDICT 底座回退；后者可以有独立 Kaikki 功能词英文义项。义项数组保留各来源顺序和定位，词卡默认按 `senses[].display_order` 升序展示：高频功能词的前两个英文原义、策展 core、common、其余功能词义项、rare；同优先级时普通词义先于 `name` 专名。功能词 `source_ref` 单独标记 Kaikki 快照与 `cross_snapshot_alignment=not-attempted`，不能视作已同版策展。这个顺序是展示规则，不能当义项正确性的证明。`ecdict.zh_fallback` 是词条级补充；不可显示在某个 `senses[i]` 下当作已对齐翻译。义项 `labels` 和 `topics` 的 scope 均为 sense，考试 `exam_tags` 是 entry 级来源声称。`legacy_phonetic` 不要标为 IPA；WordNet 候选应在独立区块标为“待对齐概念”。
 
 浏览器插件可将独立核心归档中的 5,000 词 `core.jsonl.gz` 在安装/更新时流式导入自己的只读 IndexedDB 或等效索引。不要每次打开查词面板都解压完整 JSONL，也不要把公共词典与可写用户单词本放在同一重建事务中。完整 `entries.jsonl.gz` 与 SQLite 的 JSON `payload` 采用相同 entry schema；插件与桌面端可用固定样本比对其语义结果。扩展词的独立分片尚未实现，不能宣称插件已有 81 万词离线能力。
+
+若词条存在 `editorial.display_zh`，先以“词遇审校”来源展示该字段，再单独列出 ECDICT 原回退。`editorial.revisions[]` 记录被替换的旧值、目标字段与核对页面，修订后的逐义中文也不得冒称 open-dictionary/Kaikki 原文。没有 `editorial` 的词条仍按原策展义项和 ECDICT 回退展示。
 
 ## 发音与缓存
 

@@ -19,7 +19,7 @@ CORE_LIMIT_BYTES = 64 * 1024 * 1024
 def create_core_manifest(root: Path, manifest: dict) -> list[str]:
     """从完整词包中选出核心词条和随包必需的许可材料。"""
     included = ["core.jsonl.gz", "DATA-LICENSE.md"] + sorted(
-        name for name in manifest["outputs"] if name.startswith("notices/")
+        name for name in manifest["outputs"] if name.startswith(("notices/", "editorial/"))
     )
     files = {name: manifest["outputs"][name] for name in included}
     parent_size, parent_sha = file_hash(root / "manifest.json")
@@ -98,7 +98,7 @@ def verify_core_archive(path: Path, expected_sha256: str | None = None) -> dict:
     if core["release_status"] != parent["release_status"]:
         raise ValueError("核心资产发布状态与完整清单不符")
     required_files = {"core.jsonl.gz", "DATA-LICENSE.md"} | {
-        name for name in parent["outputs"] if name.startswith("notices/")
+        name for name in parent["outputs"] if name.startswith(("notices/", "editorial/"))
     }
     if set(core["files"]) != required_files:
         raise ValueError("核心资产缺少词条或许可声明")

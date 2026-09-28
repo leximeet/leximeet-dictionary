@@ -14,6 +14,8 @@
 
 `manifest.json.generator` 记录最近一次改变构建代码、固定来源或随包许可内容的 Git commit 与 `dirty` 状态；纯文档提交不改变该值。候选工作目录可处于 dirty，但正式发布必须从已提交的源码重建，使 `generator.dirty=false`。`release-candidate.json` 回填这个值并给三份外层资产记录 SHA-256。源码 commit 证明生成规则的修订，不代替六个输入文件及音频清单各自的字节哈希。
 
+已核实的少量词遇中文审校在可选 `editorial` 中单列，`display_zh` 可作为有来源标记的优先显示文案；`revisions[]` 保留原字段文字、修订文字与义项 ID。原 `ecdict.zh_fallback` 保持不变；修订了 `senses[].learner_explanation_zh` 的词条，不能将该修订归功于 Kaikki 或 open-dictionary。审校文件、外部核对页面和 SHA-256 随归档提供。
+
 ## 1. 三种不同用途的文件
 
 | 文件 | 用途 | 选择理由 |
