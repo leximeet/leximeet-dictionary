@@ -34,10 +34,20 @@ def report(db_path: Path, out: Path) -> dict:
                 if entry_id in seen:
                     continue
                 item = json.loads(payload)
+                first_senses = item["senses"][:2]
+                ipa = [p["text"] for p in item["pronunciations"] if p["notation"] == "IPA"][:3]
                 samples.append({"stratum": name, "entry_id": entry_id, "headword": item["headword"],
                                 "origin": item["origin"], "source_entry_id": item["source_entry_id"],
-                                "sense_count": len(item["senses"]), "zh_fallback": (item["ecdict"]["zh_fallback"] or "")[:100],
-                                "review_status": "pending", "review_notes": ""})
+                                "sense_count": len(item["senses"]),
+                                "english_gloss_preview": " | ".join((s["english_gloss"] or "")[:180] for s in first_senses),
+                                "learner_zh_preview": " | ".join((s["learner_explanation_zh"] or "")[:180] for s in first_senses),
+                                "zh_fallback": (item["ecdict"]["zh_fallback"] or "")[:180],
+                                "ipa_preview": " | ".join(ipa),
+                                "labels_topics_preview": " | ".join(
+                                    ",".join(label["code"] for label in s["labels"] + s["topics"])[:120]
+                                    for s in first_senses),
+                                "review_status": "pending", "meaning_match": "", "tag_scope": "",
+                                "pronunciation_match": "", "review_notes": ""})
                 seen.add(entry_id)
                 if sum(x["stratum"] == name for x in samples) >= wanted:
                     break

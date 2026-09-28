@@ -2,8 +2,8 @@
 downloads/
 .cache/
 build/
-dist/
-audio-cache/
+dist
+audio-cache
 
 # 本地运行环境和系统文件。
 .venv/

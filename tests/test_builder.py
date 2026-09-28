@@ -12,6 +12,7 @@ from pathlib import Path
 
 from leximeet_dictionary.builder import build, file_hash, lookup, make_entry, verify_package, wordnet_candidates
 from leximeet_dictionary.package import package
+from leximeet_dictionary.quality import report
 
 
 def curated(word, entry_id, pos="noun"):
@@ -96,6 +97,12 @@ class BuilderTests(unittest.TestCase):
             self.assertEqual(lookup(output / "dictionary.sqlite", "mays")[0]["headword"], "may")
             self.assertEqual(wordnet_candidates(output / "dictionary.sqlite", "may")[0]["mapping_status"], "unmapped-headword-candidate")
             verify_package(output)
+            quality = report(output / "dictionary.sqlite", root / "qa")
+            self.assertEqual(quality["counts"]["entries"], 3)
+            with (root / "qa" / "review-sample.csv").open(newline="", encoding="utf-8") as stream:
+                sample = next(csv.DictReader(stream))
+            self.assertIn("english_gloss_preview", sample)
+            self.assertEqual(sample["review_status"], "pending")
             audio_dir = output / "audio"
             (audio_dir / "files").mkdir(parents=True)
             (audio_dir / "files" / "test.ogg").write_bytes(b"OggSfixture")
