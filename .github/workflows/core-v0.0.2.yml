@@ -1,14 +1,17 @@
-name: Build 0.0.2 core dictionary draft
+name: Release 0.0.2 core dictionary
 
 on:
+  push:
+    tags:
+      - 'v0.0.2'
   workflow_dispatch:
 
-# 只在维护者手动运行且固定 tag 已存在时上传草稿 Release。
+# 推送固定 tag 后自动构建、核验、上传草稿并发布；手动触发仅用于失败后重试。
 permissions:
   contents: write
 
 concurrency:
-  group: dictionary-v0.0.2-draft
+  group: dictionary-v0.0.2-release
   cancel-in-progress: false
 
 jobs:
@@ -96,19 +99,17 @@ jobs:
             --out dist/v0.0.2
           python -m leximeet_dictionary core-release-verify dist/v0.0.2 --deep
           df -h .
-      - name: 上传已校验的草稿 Release
+      - name: 上传草稿、核验远端资产并自动发布
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          if gh release view v0.0.2 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo 'v0.0.2 Release 已存在；流水线不会覆盖。' >&2
-            exit 1
+          if ! gh release view v0.0.2 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create v0.0.2 dist/v0.0.2/* \
+              --repo "$GITHUB_REPOSITORY" --draft --verify-tag \
+              --title 'LexiMeet Dictionary 0.0.2 Core' --notes-file docs/RELEASE_NOTES_0.0.2.md
           fi
-          gh release create v0.0.2 dist/v0.0.2/* \
-            --repo "$GITHUB_REPOSITORY" --draft --verify-tag \
-            --title 'LexiMeet Dictionary 0.0.2 Core' --notes-file docs/RELEASE_NOTES_0.0.2.md
           gh release view v0.0.2 --repo "$GITHUB_REPOSITORY" \
             --json isDraft,assets > build/remote-release.json
           python - <<'PY'
@@ -125,8 +126,25 @@ jobs:
               'sha256': hashlib.sha256(release.read_bytes()).hexdigest(),
           }
           actual = {item['name']: item for item in remote['assets']}
-          assert remote['isDraft'] and set(actual) == set(local)
+          assert set(actual) == set(local), (sorted(set(local) - set(actual)), sorted(set(actual) - set(local)))
           for name, meta in local.items():
               item = actual[name]
               assert item['size'] == meta['bytes'] and item['digest'] == 'sha256:' + meta['sha256'], name
+          PY
+          # 草稿只有在全部资产的远端大小和 SHA-256 均通过后才对外发布。
+          if python -c 'import json; print(int(json.load(open("build/remote-release.json"))["isDraft"]))' | grep -qx 1; then
+            gh release edit v0.0.2 --repo "$GITHUB_REPOSITORY" --verify-tag --draft=false
+          fi
+          gh release view v0.0.2 --repo "$GITHUB_REPOSITORY" \
+            --json isDraft,assets > build/published-release.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          before = json.loads(Path('build/remote-release.json').read_text())
+          after = json.loads(Path('build/published-release.json').read_text())
+          assert not after['isDraft'], '0.0.2 Release 仍是草稿'
+          assets = lambda data: {
+              item['name']: (item['size'], item['digest']) for item in data['assets']
+          }
+          assert assets(after) == assets(before), '发布过程中资产发生变化'
           PY

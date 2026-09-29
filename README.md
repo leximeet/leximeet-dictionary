@@ -54,6 +54,10 @@ python3 -m leximeet_dictionary lookup --db /tmp/leximeet-dictionary.sqlite bank
 
 从零生成固定数据、续跑音频和分片发包见 [构建说明](docs/BUILD.md)；应用的下载与原子替换步骤见 [客户端协议](docs/CLIENT_CONTRACT.md)。当前仓库提供可消费的数据协议和参考校验器，桌面端与插件端的原生接入由各自项目完成。
 
+## 自动化检查与发布
+
+推送到 `main` 或向 `main` 提交 PR 会运行代码检查和单元测试。0.0.2 源码准备好后，先推送 `main`，再推送指向同一提交的 `v0.0.2` tag；tag 会自动触发核心词包构建和深度校验。流水线先上传 Release 草稿，核对 GitHub 上每个资产的大小和 SHA-256，全部通过后自动发布。若草稿创建后校验失败，它会保留供排查；修复后可重跑工作流。[进度清单](docs/TASKS_0.0.2.md)记录远端验收状态。0.0.1 的构建工作流仅保留为历史版本复现入口。
+
 ## 来源与致谢
 
 | 项目 | 对词遇的贡献 |
@@ -66,4 +70,4 @@ python3 -m leximeet_dictionary lookup --db /tmp/leximeet-dictionary.sqlite bank
 
 感谢这些项目、词典编纂者、录音作者和维护者。具体版本、逐层许可、真人录音署名及权利处理方式见 [DATA-LICENSE.md](DATA-LICENSE.md) 和随包 `notice-*` 文件。仓库代码使用 [GPL-3.0](LICENSE)；不同数据和音频保留各自的来源与许可。若发现内容侵权或需要修订，请联系作者并说明具体词条或文件，维护者核查后移除或替换。
 
-**下一步：核心版学习词典。** 0.0.2 正在加入考试词书、专业领域和现有助记材料；[设计](docs/DESIGN_0.0.2.md)、[进度](docs/TASKS_0.0.2.md)、[真实词条结构](docs/WORD_ENTRY_MODEL.md)与[客户端接入协议](docs/CLIENT_CONTRACT_0.0.2.md)可直接查看。本地试产有 84,491 词带助记、33,411 词暂无助记，后者在 1.0.0 稳定后与完整版共同补齐。0.0.2 尚未发布；完整版的相同补充与全词音频亦在核心结构稳定后再做。参与修订见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+**0.0.2：核心版学习词典。** 本版加入考试词书、专业领域和现有助记材料；[设计](docs/DESIGN_0.0.2.md)、[进度](docs/TASKS_0.0.2.md)、[真实词条结构](docs/WORD_ENTRY_MODEL.md)与[客户端接入协议](docs/CLIENT_CONTRACT_0.0.2.md)可直接查看。本地试产有 84,491 词带助记、33,411 词暂无助记，后者在 1.0.0 稳定后与完整版共同补齐。正式发布状态以 [GitHub Releases](https://github.com/leximeet/leximeet-dictionary/releases) 为准；完整版的相同补充与全词音频亦在核心结构稳定后再做。参与修订见 [CONTRIBUTING.md](CONTRIBUTING.md)。

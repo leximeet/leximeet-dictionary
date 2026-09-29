@@ -36,11 +36,11 @@
 
 ## 数据交付与兼容
 
-当前实现为单独的 `leximeet.learning.v2` SQLite：`metadata`、`catalogs`、`members`、`mnemonics`；它还能组装 `leximeet.entry.v2` 核心词 JSONL，字段位置见[真实词条讲解](WORD_ENTRY_MODEL.md)，新增字段契约见 [JSON Schema](../schemas/leximeet.entry.v2.schema.json)。它只读取 `core.entries.jsonl.gz`，不重建 0.0.1 的 1.74 GB 完整版，也不修改 `leximeet.entry.v1` 或音频分片。客户端按 `entry_id` 左连接词卡与学习索引；升级期间 0.0.1 词卡仍可独立查词。发布时把学习索引作为核心版资产纳入新版固定 `release.json`，记录大小、哈希和来源声明，端侧校验后原子替换。当前文件仍是**本地开发候选**，不在 GitHub Release 中。
+当前实现为单独的 `leximeet.learning.v2` SQLite：`metadata`、`catalogs`、`members`、`mnemonics`；它还能组装 `leximeet.entry.v2` 核心词 JSONL，字段位置见[真实词条讲解](WORD_ENTRY_MODEL.md)，新增字段契约见 [JSON Schema](../schemas/leximeet.entry.v2.schema.json)。它只读取 `core.entries.jsonl.gz`，不重建 0.0.1 的 1.74 GB 完整版，也不修改 `leximeet.entry.v1` 或音频分片。客户端按 `entry_id` 左连接词卡与学习索引；升级期间 0.0.1 词卡仍可独立查词。发布时把学习索引作为核心版资产纳入新版固定 `release.json`，记录大小、哈希和来源声明，端侧校验后原子替换。本地构建产物须经过远端发布校验，才能作为正式词包分发。
 
 `core-release-build` 按 `leximeet.release.v2` 交付 0.0.2 的**单一核心版**：完整 v2 JSONL、学习 SQLite、固定来源锁、许可声明和复用的 0.0.1 核心音频索引与分片。来源锁固定**官方 v0.0.1 Release 清单**的 SHA-256，构建器拒绝使用同版本但音频不同的本地旧包。`release.json` 给出每个文件的字节数与 SHA-256，并分别记录助记、音频覆盖数；同名同哈希的音频资产可由客户端直接复用。`core-release-verify --deep` 核对逐词词卡、词书、现有助记及全部核心音频。消费协议见 [0.0.2 客户端接入](CLIENT_CONTRACT_0.0.2.md)。
 
-基于官方 v0.0.1 核心资产的本地真实候选已完成深检：117,902 条词卡、117,902 条音频、84,491 条带助记，共 17 个发布资产。远端流水线和草稿 Release 仍待运行。
+基于官方 v0.0.1 核心资产的本地真实候选已完成深检：117,902 条词卡、117,902 条音频、84,491 条带助记，共 17 个发布资产。远端验收以 [Actions](https://github.com/leximeet/leximeet-dictionary/actions) 日志与公开 Release 的资产清单为准。
 
 本地构建还写出同名 `*.report.json` 和 `*.audit.json`；后者记录未匹配、歧义、重复、排除及无效内容。加入 SAT、GMAT 后，实测 23 个目录、32,236 条 qwerty 词书成员，其中 32,236 条有补充译文、31,823 条有原始音标；qwerty 有 534 条跳过记录，GPT 有 699 条审计项，其中 2 条是已知错误文章的编辑排除。`learning-sources.lock.json` 固定 qwerty 十个 JSON 和 DictionaryByGPT4 的文件哈希。CLI 可在不提供这两种候选来源时，仅从核心词卡生成 ECDICT 考试集合、义项领域集合与现有短助记；这也是公共数据可独立工作的最低基线。目录快查与分页通过 SQLite 索引完成，消费端无须扫描 117,902 行 JSONL。
 
