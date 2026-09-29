@@ -11,7 +11,7 @@
 | ECDICT 考试标签 | 14,942 个核心词至少有一项 | 生成四级、六级、考研等**标签集合** | 不能冒称某个出版社的完整教材 |
 | open-dictionary 义项领域 | 22,274 个核心词至少有一项 | 按具体意思生成专业分类 | 标签覆盖不全；不能从词头字面猜领域 |
 | DictionaryByGPT4 | 本地 8,714 行；当前匹配 7,258 个核心词 | 原样导入独立的 AI 学习文章候选 | 与已有助记多重叠；不能代替逐词核实 |
-| qwerty-learner | 首批固定 8 份英语词表 | 有序词书的词头和归属 | 有些词不在核心版；原始词表权利链待核 |
+| qwerty-learner | 首批固定 10 份英语词表 | 有序词书、每书译文及原始英美音标 | 有些词不在核心版；需要与主词义保持分层 |
 
 试构建后，84,491 个核心词有至少一种学习材料，其中 84,212 个已有 open-dictionary 助记。DictionaryByGPT4 虽匹配 7,258 词，但其中 6,979 词与现有短助记重合，只为 279 个补词新增学习材料；剩余 **33,411 个**还没有材料。这个缺口必须进入 0.0.2 任务表，不以“已匹配 GPT”代替“逐词覆盖”。
 
@@ -19,14 +19,14 @@
 
 `catalogs` 保存目录；`members` 保存 `catalog_id → entry_id` 和顺序。类型只有 `exam`（备考）和 `subject`（专业）。客户端用同一列表 API 显示两类，用户学习进度仍存于自己的数据库，不进入公共词包。
 
-1. **有序词书**：`book:qwerty:CET4_T` 等从 qwerty 资源仅取词头、原位置和词表 ID，按 `entry_id` 关联词遇词卡。它代表该具体词表，不能与 ECDICT 标签互相替换。未匹配、重复及大小写歧义要出报告；不把第三方翻译、音标、录音或习题复制进基础词卡。
+1. **有序词书**：`book:qwerty:CET4_T` 等从 qwerty 资源取词头、原位置、补充译文和英美原始音标，按 `entry_id` 关联词遇词卡。译文与音标分别保存在每本词书的 `source_payload`，不覆盖主词义或主 IPA；不导入音频和习题。未匹配、重复及大小写歧义出审计报告。
 2. **考试标签集合**：`exam:ecdict:cet4` 等来自既有词卡的 `ecdict.exam_tags`。顺序是词遇按 ECDICT 历史词频和词头派生，不是来源教材顺序。可以作为可学习的“备考集合”，名称须标明“ECDICT 标签”。
 3. **义项领域集合**：`subject:topic:computing` 等从 `senses[].topics` 得出。成员保存匹配的 `sense_ids`：进入“计算机”目录后默认突出显示计算机义项，而不是把整个多义词的所有解释都标为计算机。首批五类是计算机、生物、医学、法律、金融；生物类明确合并 `biology/biochemistry/microbiology`，原始 topic 保留不变。
-4. **专业词表**：`book:qwerty:itVocabulary`、`book:qwerty:BIOmedical` 是独立有序词书，只有词条级归属。它们不能反过来证明某个具体义项属于医学或计算机。例如 `algorithm` 在程序员词表中，并不意味着 0.0.1 的每个义项都有 `computing` 标签。
+4. **专业词表**：`book:qwerty:itVocabulary`、`book:qwerty:BIOmedical` 是独立有序词书，保留词条级归属、补充译文和可用的原始音标。它们不能反过来证明某个具体义项属于医学或计算机。例如 `algorithm` 在程序员词表中，并不意味着 0.0.1 的每个义项都有 `computing` 标签。
 
 首批本地比对也说明两种“专业词书”不能合成同一个真值：qwerty 计算机书在核心版匹配 1,646 词，仅 456 词同时有现成计算机义项 topic；另 1,190 词只有词书归属。生物医学书在核心版匹配 408 词，仅 109 词同时有生物或医学义项 topic；另 299 词只有词书归属。后者是人工/AI 复核领域漏标的候选，不可自动给它们所有义项贴专业标签。
 
-目录可追加其他考试或专业来源，但必须保存来源、作用域、匹配方法、权利状态和导入统计。不要把“考试”“专业”“词书 ID”“义项标签”压成一个无类型的 `tags` 数组。
+目录可追加其他考试或专业来源，但必须保存来源、作用域、匹配方法和导入统计。不要把“考试”“专业”“词书 ID”“义项标签”压成一个无类型的 `tags` 数组。
 
 ## 助记层
 
@@ -36,18 +36,16 @@
 
 ## 数据交付与兼容
 
-当前试实现为单独的 `leximeet.learning.v1` SQLite：`metadata`、`catalogs`、`members`、`mnemonics`。它只读取 `core.entries.jsonl.gz`，不重建 0.0.1 的 1.74 GB 完整版，也不修改 `leximeet.entry.v1` 或音频分片。客户端按 `entry_id` 左连接词卡与学习索引；升级期间 0.0.1 词卡仍可独立查词。正式发布时把学习索引作为核心版资产纳入新版固定 `release.json`，记录大小、哈希和来源声明，端侧校验后原子替换。现在的 `build/learning-v0.0.2.sqlite` 是**本地开发候选**，不在 GitHub Release 中。
+当前试实现为单独的 `leximeet.learning.v2` SQLite：`metadata`、`catalogs`、`members`、`mnemonics`；它还能组装 `leximeet.entry.v2` 核心词 JSONL，字段位置见[真实词条讲解](WORD_ENTRY_MODEL.md)，新增字段契约见 [JSON Schema](../schemas/leximeet.entry.v2.schema.json)。它只读取 `core.entries.jsonl.gz`，不重建 0.0.1 的 1.74 GB 完整版，也不修改 `leximeet.entry.v1` 或音频分片。客户端按 `entry_id` 左连接词卡与学习索引；升级期间 0.0.1 词卡仍可独立查词。正式发布时把学习索引作为核心版资产纳入新版固定 `release.json`，记录大小、哈希和来源声明，端侧校验后原子替换。现在的 `build/learning-v0.0.2-v2.sqlite` 是**本地开发候选**，不在 GitHub Release 中。
 
-本地构建还写出 `learning-v0.0.2.report.json` 和 `learning-v0.0.2.audit.json`；后者逐条记录未匹配、歧义、重复及无效内容。实测 qwerty 共 331 条跳过记录，GPT 共 697 条跳过记录，均不静默丢弃。`learning-sources.lock.json` 固定 qwerty 八个 JSON 和 DictionaryByGPT4 的文件哈希。CLI 可在不提供这两种候选来源时，仅从核心词卡生成 ECDICT 考试集合、义项领域集合与现有短助记；这也是公共数据可独立工作的最低基线。目录快查与分页通过 SQLite 索引完成，消费端无须扫描 117,902 行 JSONL。
+本地构建还写出 `learning-v0.0.2-v2.report.json` 和 `learning-v0.0.2-v2.audit.json`；后者逐条记录未匹配、歧义、重复及无效内容。加入 SAT、GMAT 后，实测 23 个目录、32,236 条 qwerty 词书成员，其中 32,236 条有补充译文、31,823 条有原始音标；qwerty 共 534 条跳过记录，GPT 共 697 条跳过记录。`learning-sources.lock.json` 固定 qwerty 十个 JSON 和 DictionaryByGPT4 的文件哈希。CLI 可在不提供这两种候选来源时，仅从核心词卡生成 ECDICT 考试集合、义项领域集合与现有短助记；这也是公共数据可独立工作的最低基线。目录快查与分页通过 SQLite 索引完成，消费端无须扫描 117,902 行 JSONL。
 
-## 来源与发布边界
+## 来源与署名
 
-[qwerty-learner](https://github.com/RealKai42/qwerty-learner) 的 README 明写其字典数据来自 [kajweb/dict](https://github.com/kajweb/dict)，后者自述采集自词典 App。qwerty 仓库的软件 GPL-3.0 并不能单独证明每份经加工词表都具有再分发授权；“加工过”也不会自动消除上游权利问题。[GitHub 的许可说明](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/licensing-a-repository)也区分了仓库公开可见与授权复制、分发。当前 qwerty 目录在试产索引中标为 `candidate-upstream-rights-unverified`，只作本地匹配与目录体验验证；公开词包必须先决定每份词表的可发布依据，或改用有明确授权的词表/独立整理的公开考试大纲。对外文档保留“联系作者”权利处理入口。
-
-DictionaryByGPT4 有独立 CC BY-SA 4.0 许可文件，但生成文章仍应显示来源与“AI 内容需核查”；不可把生成的词源、例句或考试题直接标为事实来源。正式打包须保留许可与署名。
+词书数据来自固定版本的 [qwerty-learner](https://github.com/RealKai42/qwerty-learner)，学习文章来自固定版本的 [DictionaryByGPT4](https://github.com/Ceelog/DictionaryByGPT4)；版本和输入哈希见 `learning-sources.lock.json`。导出时保留逐目录和逐材料的来源，不把补充译文改写成主词义。正式发布时在 `DATA-LICENSE.md` 与词包许可文件中保留相应署名。
 
 ## 0.0.3 与 1.0.0 后
 
-0.0.3 参考 `reference/resource/dict` 的**字段能力**：释义、练习、例句、近/反义词、短语、同根词、记忆方法、词书位置、配图和发音；81 个 ZIP 的字段盘点及映射见[词条结构讲解](WORD_ENTRY_MODEL.md)。以词遇自己的有来源词卡 + AI 生成或有授权材料填充，使用独立的练习/词汇关系结构，逐字段记录生成方式与验证状态；不直接复制该仓库的无许可内容或有道语音 URL。`realExamSentence` 只有取得可核查的原题来源和使用依据才叫“真题”；AI 生成的题必须标成“模拟练习”。
+0.0.3 使用词遇自己的结构填充已经预留的短语、近反义词、同根词、练习、配图和其他发音候选。每项内容保存来源、生成方式及审核状态；AI 生成的练习标为模拟题，有出处的真实题目另存可核查的来源信息。
 
 1.0.0 的目标是稳定核心词条、词书、助记与练习契约。之后才把相同结构扩到 `full` 的非核心词，并评估全词离线音频。0.0.2 和 0.0.3 的开发、构建与测试以核心版为主。

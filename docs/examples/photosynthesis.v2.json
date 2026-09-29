@@ -1,0 +1,345 @@
+{
+  "audio_ids": [],
+  "audit_status": "aligned",
+  "base_entry_schema": "leximeet.entry.v1",
+  "definition_language": "zh-Hans",
+  "ecdict": {
+    "en_fallback": "n. synthesis of compounds with the aid of radiant energy (especially in plants)",
+    "exam_tags": [
+      {
+        "code": "toefl",
+        "scope": "entry",
+        "source": "ecdict:bc015ed2",
+        "status": "source-asserted"
+      },
+      {
+        "code": "gre",
+        "scope": "entry",
+        "source": "ecdict:bc015ed2",
+        "status": "source-asserted"
+      }
+    ],
+    "frequency_ranks": {
+      "bnc": 17561,
+      "frq": 17755
+    },
+    "legacy_phonetic": ".fәutәu'sinθәsis",
+    "source_fields": {},
+    "zh_fallback": "n. 光合作用\\n[化] 光合作用"
+  },
+  "entry_id": "7fb01ea7-0fab-5cc5-8723-d902d6a16c99",
+  "forms": [
+    {
+      "source": "open-dictionary:v2.0",
+      "tags": [
+        "plural"
+      ],
+      "text": "photosyntheses"
+    }
+  ],
+  "headword": "photosynthesis",
+  "headword_language": "en",
+  "headword_summary_zh": "光合作用：植物和其他能利用光能的生物把光能转化为化学能，并通常用来合成有机物的过程。",
+  "learning": {
+    "audio": {
+      "alternate_candidates": [],
+      "offline_index_entry_id": "7fb01ea7-0fab-5cc5-8723-d902d6a16c99"
+    },
+    "collections": [
+      {
+        "catalog_id": "book:qwerty:GMAT_3_T",
+        "category": "exam",
+        "position": 1389,
+        "sense_ids": [],
+        "source": "qwerty-learner:122acd9:GMAT_3_T",
+        "source_payload": {
+          "glosses_zh": [
+            "光合作用"
+          ],
+          "pronunciations": [
+            {
+              "raw_text": ",foto'sɪnθəsɪs",
+              "region": "en-US"
+            },
+            {
+              "raw_text": "ˌfoutou'sɪnθəsɪs",
+              "region": "en-GB"
+            }
+          ],
+          "source_record_id": null,
+          "source_word": "photosynthesis"
+        }
+      },
+      {
+        "catalog_id": "book:qwerty:GRE_3_T",
+        "category": "exam",
+        "position": 2356,
+        "sense_ids": [],
+        "source": "qwerty-learner:122acd9:GRE_3_T",
+        "source_payload": {
+          "glosses_zh": [
+            "光合作用"
+          ],
+          "pronunciations": [
+            {
+              "raw_text": ",foto'sɪnθəsɪs",
+              "region": "en-US"
+            },
+            {
+              "raw_text": "ˌfoutou'sɪnθəsɪs",
+              "region": "en-GB"
+            }
+          ],
+          "source_record_id": null,
+          "source_word": "photosynthesis"
+        }
+      },
+      {
+        "catalog_id": "book:qwerty:SAT_3_T",
+        "category": "exam",
+        "position": 3251,
+        "sense_ids": [],
+        "source": "qwerty-learner:122acd9:SAT_3_T",
+        "source_payload": {
+          "glosses_zh": [
+            "光合作用"
+          ],
+          "pronunciations": [
+            {
+              "raw_text": ",foto'sɪnθəsɪs",
+              "region": "en-US"
+            },
+            {
+              "raw_text": "ˌfəutəu'sinθəsis",
+              "region": "en-GB"
+            }
+          ],
+          "source_record_id": null,
+          "source_word": "photosynthesis"
+        }
+      },
+      {
+        "catalog_id": "book:qwerty:TOEFL_3_T",
+        "category": "exam",
+        "position": 3100,
+        "sense_ids": [],
+        "source": "qwerty-learner:122acd9:TOEFL_3_T",
+        "source_payload": {
+          "glosses_zh": [
+            "光合作用"
+          ],
+          "pronunciations": [
+            {
+              "raw_text": ",foto'sɪnθəsɪs",
+              "region": "en-US"
+            },
+            {
+              "raw_text": "ˌfoutou'sɪnθəsɪs",
+              "region": "en-GB"
+            }
+          ],
+          "source_record_id": null,
+          "source_word": "photosynthesis"
+        }
+      },
+      {
+        "catalog_id": "exam:ecdict:gre",
+        "category": "exam",
+        "position": 4555,
+        "sense_ids": [],
+        "source": "ecdict:bc015ed2",
+        "source_payload": {}
+      },
+      {
+        "catalog_id": "exam:ecdict:toefl",
+        "category": "exam",
+        "position": 5742,
+        "sense_ids": [],
+        "source": "ecdict:bc015ed2",
+        "source_payload": {}
+      },
+      {
+        "catalog_id": "subject:topic:biology",
+        "category": "subject",
+        "position": 901,
+        "sense_ids": [
+          "b9ceed6e-5efd-568b-84a8-f6325da61a6f"
+        ],
+        "source": "open-dictionary:v2.0",
+        "source_payload": {}
+      }
+    ],
+    "illustrations": [],
+    "lexical": {
+      "antonyms": [],
+      "phrases": [],
+      "related_words": [],
+      "synonyms": []
+    },
+    "mnemonics": [
+      {
+        "content": "把植物想成一座靠阳光供电的工厂：它先接收光能，再把这种能量“存”进化学物质中，于是光能转成化学能，这整个过程就是光合作用。",
+        "format": "plain",
+        "kind": "memory-hook",
+        "provenance": {
+          "source_entry_id": "9df0e7f2-2ce3-57c8-b649-1374219fefa9",
+          "source_field": "memory_hook_zh"
+        },
+        "review_status": "source-published",
+        "source": "open-dictionary:v2.0"
+      }
+    ],
+    "practice": {
+      "attested_examples": [],
+      "questions": []
+    },
+    "schema_version": "leximeet.learning-card.v1",
+    "source_signals": []
+  },
+  "lookup_key": "photosynthesis",
+  "memory_hook_zh": "把植物想成一座靠阳光供电的工厂：它先接收光能，再把这种能量“存”进化学物质中，于是光能转成化学能，这整个过程就是光合作用。",
+  "origin": "curated",
+  "pronunciations": [
+    {
+      "etymology_id": "et1",
+      "notation": "IPA",
+      "pos": "noun",
+      "region": "en-US",
+      "source": "open-dictionary:v2.0",
+      "tags": [
+        "US"
+      ],
+      "text": "/ˌfoʊ.toʊˈsɪn.θə.sɪs/"
+    },
+    {
+      "etymology_id": "et1",
+      "notation": "IPA",
+      "pos": "noun",
+      "region": "en-GB",
+      "source": "open-dictionary:v2.0",
+      "tags": [
+        "UK"
+      ],
+      "text": "/ˌfəʊ.təʊˈsɪn.θə.sɪs/"
+    },
+    {
+      "etymology_id": "et1",
+      "notation": "IPA",
+      "pos": "noun",
+      "region": "en-GB",
+      "source": "open-dictionary:v2.0:audit:wiktionary:2025-10-23",
+      "tags": [
+        "UK"
+      ],
+      "text": "[ˌfəʊ.tʰəʊˈsɪn̪.θə.sɪs]"
+    },
+    {
+      "etymology_id": "et1",
+      "notation": "IPA",
+      "pos": "noun",
+      "region": "en-US",
+      "source": "open-dictionary:v2.0:audit:wiktionary:2025-10-23",
+      "tags": [
+        "US"
+      ],
+      "text": "[ˌfŏʊ.ɾoʊˈsɪn̪.θə.sɪs]"
+    },
+    {
+      "etymology_id": null,
+      "notation": "ARPABET",
+      "pos": null,
+      "region": "en-US",
+      "source": "cmudict:74790861",
+      "tags": [],
+      "text": "F OW2 T OW0 S IH1 N TH AH0 S IH0 S"
+    }
+  ],
+  "schema_version": "leximeet.entry.v2",
+  "senses": [
+    {
+      "display_order": 0,
+      "english_gloss": "Any process by which plants and other photoautotrophs convert light energy into chemical energy.",
+      "english_gloss_source": "open-dictionary:v2.0:audit:wiktionary:2025-10-23",
+      "etymology_id": "et1",
+      "examples": [
+        {
+          "source": "open-dictionary:v2.0",
+          "text": "Plants use sunlight for photosynthesis.",
+          "translation": "植物利用阳光进行光合作用。"
+        },
+        {
+          "source": "open-dictionary:v2.0",
+          "text": "Photosynthesis converts light energy into chemical energy.",
+          "translation": "光合作用把光能转化为化学能。"
+        }
+      ],
+      "labels": [
+        {
+          "code": "uncountable",
+          "scope": "sense",
+          "source": "open-dictionary:v2.0"
+        },
+        {
+          "code": "usually",
+          "scope": "sense",
+          "source": "open-dictionary:v2.0"
+        }
+      ],
+      "learner_explanation_zh": "植物和其他能利用光能的生物把光能转化为化学能的过程。可以把它想成植物用阳光给自己“充能”，并把能量存进有机物中。",
+      "pos": "noun",
+      "priority": "core",
+      "sense_id": "b9ceed6e-5efd-568b-84a8-f6325da61a6f",
+      "short_gloss": "光能转化为化学能的过程",
+      "source_ref": {
+        "entry_id": "9df0e7f2-2ce3-57c8-b649-1374219fefa9",
+        "etymology_id": "et1",
+        "group_index": 0,
+        "pos": "noun",
+        "sense_id": "s1",
+        "source": "open-dictionary:v2.0"
+      },
+      "topics": [
+        {
+          "code": "biochemistry",
+          "scope": "sense",
+          "source": "open-dictionary:v2.0"
+        },
+        {
+          "code": "biology",
+          "scope": "sense",
+          "source": "open-dictionary:v2.0"
+        },
+        {
+          "code": "chemistry",
+          "scope": "sense",
+          "source": "open-dictionary:v2.0"
+        },
+        {
+          "code": "microbiology",
+          "scope": "sense",
+          "source": "open-dictionary:v2.0"
+        },
+        {
+          "code": "natural-sciences",
+          "scope": "sense",
+          "source": "open-dictionary:v2.0"
+        },
+        {
+          "code": "organic-chemistry",
+          "scope": "sense",
+          "source": "open-dictionary:v2.0"
+        },
+        {
+          "code": "physical-sciences",
+          "scope": "sense",
+          "source": "open-dictionary:v2.0"
+        }
+      ],
+      "usage_note_zh": "常用“植物进行光合作用”“通过光合作用制造……”“光合作用需要……”。它通常指一个过程，作不可数名词使用，不要随意加复数词尾。说明具体机制时，常把光、水、二氧化碳、氧气或糖放在它前后作搭配。"
+    }
+  ],
+  "source_entry_id": "9df0e7f2-2ce3-57c8-b649-1374219fefa9",
+  "study_notes_zh": [
+    "先记住“阳光驱动的能量储存”这一核心画面，再补充二氧化碳、水、糖和氧气等具体内容。不要把光合作用误解成植物的“呼吸”；呼吸作用是另一种能量过程。"
+  ]
+}

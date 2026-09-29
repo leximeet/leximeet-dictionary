@@ -17,6 +17,10 @@
       "bytes": 481442,
       "sha256": "ed5e76b945b7c7bc567a75d44a6eaeda137c767960121057deab52593e245d6e"
     },
+    "GMAT_3_T": {
+      "bytes": 539915,
+      "sha256": "ed8ce2700e4af00421f7f8a663e4eb754da000bb19ac0d922cb2d02bc1a22f94"
+    },
     "GRE_3_T": {
       "bytes": 1155002,
       "sha256": "728890a7e9e766c2a07c02b9c8ac638274cf04b096e15ed8cd6abc0723366e40"
@@ -28,6 +32,10 @@
     "KaoYan_3_T": {
       "bytes": 694848,
       "sha256": "2997157b54912bb56118cf3153fb891c452fbfe813da8d21bb219ea7f2829090"
+    },
+    "SAT_3_T": {
+      "bytes": 795224,
+      "sha256": "801f17a1b63a0377dc331214e5af2900279c93b6baa8a828d6e639ae5db48310"
     },
     "TOEFL_3_T": {
       "bytes": 814216,

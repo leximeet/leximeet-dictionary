@@ -98,6 +98,14 @@ def parser() -> argparse.ArgumentParser:
     learning_missing.add_argument("--core", type=Path, required=True)
     learning_missing.add_argument("--db", type=Path, required=True)
     learning_missing.add_argument("--out", type=Path, required=True)
+    learning_entry_json = commands.add_parser("learning-entry-json", help="组装一个完整的核心版 v2 单词 JSON")
+    learning_entry_json.add_argument("--core", type=Path, required=True)
+    learning_entry_json.add_argument("--db", type=Path, required=True)
+    learning_entry_json.add_argument("word")
+    learning_export = commands.add_parser("learning-export", help="导出全部核心词的 v2 JSONL")
+    learning_export.add_argument("--core", type=Path, required=True)
+    learning_export.add_argument("--db", type=Path, required=True)
+    learning_export.add_argument("--out", type=Path, required=True)
     return root
 
 
@@ -128,6 +136,12 @@ def main() -> None:
     elif args.command == "learning-missing":
         from .learning import export_missing
         result = export_missing(args.core, args.db, args.out)
+    elif args.command == "learning-entry-json":
+        from .entry_v2 import read_entry
+        result = read_entry(args.core, args.db, args.word)
+    elif args.command == "learning-export":
+        from .entry_v2 import export_core
+        result = export_core(args.core, args.db, args.out)
     elif args.command == "lookup":
         result = {"entries": lookup(args.db, args.word)}
         if args.wordnet:

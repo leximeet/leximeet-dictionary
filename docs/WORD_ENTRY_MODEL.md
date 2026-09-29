@@ -349,7 +349,7 @@ flowchart TD
 
 WordNet 也单独保存。本词按词头查询得到候选 synset 13558632-n，definition 为 synthesis of compounds with the aid of radiant energy (especially in plants)，mapping_status=unmapped-headword-candidate。它尚未自动绑定上面的 sense_id，不能把 WordNet 定义冒充经过对齐的主词义。
 
-0.0.2 本地试产学习索引还能查询到本词的 ECDICT 托福/GRE 集合、qwerty 托福/GRE 候选词书、义项级生物目录，以及原有短助记。qwerty 候选的权利状态和 0.0.1 正式词包不同；详见 [设计文档](DESIGN_0.0.2.md)。本词在 DictionaryByGPT4 当前固定输入中没有匹配文章。
+0.0.2 本地试产学习索引还能查询到本词的 ECDICT 托福/GRE 集合、qwerty 托福/GRE 词书、义项级生物目录，以及原有短助记。本词在 DictionaryByGPT4 当前固定输入中没有匹配文章。
 
 ## 与上游 JSON 的区别
 
@@ -362,26 +362,29 @@ WordNet 也单独保存。本词按词头查询得到候选 synset 13558632-n，
 | 发音 | IPA 和音频线索 | 旧式音标 | IPA、CMU ARPABET、离线音频索引分别保存 |
 | 交付 | 上游数据文件 | CSV | 0.0.1 可校验 core/full 资产；0.0.2 计划加入核心学习索引 |
 
-## kajweb/dict 能力映射与 0.0.3
+## 0.0.2 核心版 JSON：学习层与扩展位置
 
-实查本地参考仓库的 **81 个 ZIP、153,009 条记录**，顶层字段均为 `wordRank/headWord/content/bookId`；内层 `content.word.content` 共出现 17 类字段，不是每个词都有全部字段。CET4_3 的首词 cancel 含完整的四选一题、例句、近义词、短语、同根词和双语翻译；它的 `remMethod` 等字段可能只在其他词出现。下表是字段能力映射，不复制无许可内容。
+[photosynthesis.v2.json](examples/photosynthesis.v2.json) 是从真实核心词卡和本地学习索引组装的**完整 JSON**。它保留上文全部原字段，结构版本改为 `leximeet.entry.v2`，新增 `base_entry_schema=leximeet.entry.v1` 与 `learning`；新增字段的记录格式见 [JSON Schema](../schemas/leximeet.entry.v2.schema.json)。用下面的命令可查看任意核心词或导出全部核心词：
 
-| 参考字段及内部结构 | 词遇已有或规划的落点 |
-| --- | --- |
-| `bookId/wordRank/content.word.wordId` | 0.0.2 `catalogs/members` 的目录、顺序与来源映射 |
-| `headWord/content.word.wordHead` | 现有 `headword`；核对两处拼写一致 |
-| `content.word.content.trans[].tranCn/tranOther/pos` 及 `descCn/descOther` | 现有逐义解释和 ECDICT 回退；说明性 `desc` 不直接当词义 |
-| `usphone/ukphone/phone` | 现有 `pronunciations[]`；原始旧式音标不冒充 IPA |
-| `usspeech/ukspeech/speech` | 独立音频索引；不复用有道请求参数或第三方音频 |
-| `sentence.sentences[].sContent/sCn` | 现有 `senses[].examples[]`；新增例句需能对齐义项和来源 |
-| `remMethod.val/desc` | 现有短助记与 0.0.2 `mnemonics`；AI 内容保存生成/复核元数据 |
-| `syno.synos[].pos/tran/hwds[].w` | 0.0.3 的近义关系，保留词性和所指义项 |
-| `antos.anto[].hwd` | 0.0.3 的反义关系，不靠词头机械推断 |
-| `phrase.phrases[].pContent/pCn` | 0.0.3 的短语/搭配层 |
-| `relWord.rels[].pos/words[].hwd/tran` | 0.0.3 的派生词关系，保留词性与中文说明 |
-| `exam[].question/choices/answer/examType` | 0.0.3 的练习题；记录题型、选项、答案、解析与生成来源 |
-| `realExamSentence.sentences[].sourceInfo` | 只有可核查的来源/使用依据才能标为真题；AI 产出只能叫模拟练习 |
-| `star` | 原字段含义尚未核实，不能直接变成词频/难度；如需等级另定量表 |
-| `picture` | 0.0.3 可设计配图层，但需自有/明确授权图片和替代文本 |
+```bash
+python3 -m leximeet_dictionary learning-entry-json --core dist/v0.0.1/core.entries.jsonl.gz --db build/learning-v0.0.2-v2.sqlite photosynthesis
+python3 -m leximeet_dictionary learning-export --core dist/v0.0.1/core.entries.jsonl.gz --db build/learning-v0.0.2-v2.sqlite --out build/core.entries.v2.jsonl.gz
+```
 
-[kajweb/dict](https://github.com/kajweb/dict) 当前仓库未见许可证，README 自述数据采自词典 App；因此 0.0.3 的目标是用有依据的词遇词卡和 AI 生产**自己的**内容来覆盖这些能力；`realExamSentence`、原始图片与原始音频不能仅靠 AI 伪造来源。经 qwerty-learner 加工并不自动使上游数据获得再分发授权，具体发布边界见 [0.0.2 设计](DESIGN_0.0.2.md)。
+`learning.collections[]` 对应“一个词在哪本书、排第几、匹配哪个义项”。例如样本中的 GMAT/GRE/SAT/TOEFL 词书分别保存 `source_payload.glosses_zh` 和 `source_payload.pronunciations[].raw_text`；它们是词书提供的补充文本，**没有覆盖**主词卡 `senses[]` 或标准 IPA。`source_record_id=null` 是为未来有源记录 ID 的词书保留的位置。考试标签集合的 `sense_ids=[]` 表示词条级；专业目录则保存命中的具体义项 ID。
+
+`learning.mnemonics[]` 保留来源、格式、内容和复核状态。`learning.audio.offline_index_entry_id` 指向现有独立离线音频索引。其余字段现为可扩展的空数组：
+
+| v2 字段 | 承载的能力 | 当前状态 |
+| --- | --- | --- |
+| `learning.lexical.synonyms[]` | 近义词，未来可关联具体义项 | 已预留 |
+| `learning.lexical.antonyms[]` | 反义词 | 已预留 |
+| `learning.lexical.related_words[]` | 同根词、派生词 | 已预留 |
+| `learning.lexical.phrases[]` | 短语与搭配及中文说明 | 已预留 |
+| `learning.practice.questions[]` | 选择题、选项、答案、解析、题型 | 已预留 |
+| `learning.practice.attested_examples[]` | 带来源信息的真实例句 | 已预留 |
+| `learning.illustrations[]` | 图片、替代文本、来源 | 已预留 |
+| `learning.source_signals[]` | 词书自有的评级/标记；不擅自解释为词频 | 已预留 |
+| `learning.audio.alternate_candidates[]` | 其他有来源的发音候选 | 已预留 |
+
+现有 `senses[]` 已覆盖逐义词性、中英释义、普通例句和用法标签；`pronunciations[]` 已覆盖音标；`forms[]` 已覆盖词形。0.0.3 可逐项填充上述空位，AI 生成练习标为模拟题，来源明确的题目或例句另存来源信息。核心词结构稳定后再扩展完整版。

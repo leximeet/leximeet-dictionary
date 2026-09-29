@@ -8,6 +8,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from leximeet_dictionary.entry_v2 import export_core, read_entry
 from leximeet_dictionary.learning import (
     BOOKS, build_learning, export_missing, learning_for_entry, list_catalogs, list_members,
 )
@@ -53,7 +54,8 @@ class LearningTest(unittest.TestCase):
         self.dicts.mkdir()
         qwerty = {}
         for book_id, _, _ in BOOKS:
-            words = [{"name": "photosynthesis"}, {"name": "Photosynthesis"},
+            words = [{"name": "photosynthesis", "trans": ["光合作用"], "usphone": "photo-us"},
+                     {"name": "Photosynthesis"},
                      {"name": "May"}, {"name": "MAY"}, {"name": "absent"}] if book_id == "CET4_T" else []
             qwerty[book_id] = _write_json(self.dicts / (book_id + ".json"), words)
         self.gpt = self.root / "gptwords.json"
@@ -84,11 +86,13 @@ class LearningTest(unittest.TestCase):
         self.assertEqual(report["entries_without_learning_material"], 2)
         catalogs = {row["catalog_id"]: row for row in list_catalogs(self.out)}
         self.assertEqual(len(catalogs), len(BOOKS) + 8 + 5)
-        self.assertEqual(catalogs["book:qwerty:CET4_T"]["rights_status"],
-                         "candidate-upstream-rights-unverified")
+        self.assertEqual(catalogs["book:qwerty:CET4_T"]["source"],
+                         "qwerty-learner:fixture:CET4_T")
         members = list_members(self.out, "book:qwerty:CET4_T")
         self.assertEqual([row["entry_id"] for row in members], ["photo", "month"])
         self.assertEqual(members[0]["position"], 1)
+        self.assertEqual(members[0]["source_payload"]["glosses_zh"], ["光合作用"])
+        self.assertEqual(members[0]["source_payload"]["pronunciations"][0]["region"], "en-US")
         subject = list_members(self.out, "subject:topic:biology")
         self.assertEqual(subject[0]["sense_ids"], ["sense-photo"])
         self.assertEqual(list_members(self.out, "exam:ecdict:toefl")[0]["sense_ids"], [])
@@ -109,6 +113,33 @@ class LearningTest(unittest.TestCase):
         self.assertEqual(audit["gpt_skipped"][0]["reason"], "ambiguous")
         with self.assertRaises(FileExistsError):
             build_learning(self.core, self.out, self.lock)
+
+    def test_v2_entry_reserves_learning_fields_and_exports_deterministically(self):
+        build_learning(self.core, self.out, self.lock, self.dicts, self.gpt)
+        entry = read_entry(self.core, self.out, "Photosynthesis")
+        self.assertEqual(entry["schema_version"], "leximeet.entry.v2")
+        self.assertEqual(entry["base_entry_schema"], "leximeet.entry.v1")
+        self.assertEqual(entry["learning"]["practice"], {
+            "questions": [], "attested_examples": [],
+        })
+        self.assertEqual(set(entry["learning"]["lexical"]),
+                         {"synonyms", "antonyms", "related_words", "phrases"})
+        self.assertEqual(entry["learning"]["illustrations"], [])
+        self.assertEqual(entry["learning"]["source_signals"], [])
+        self.assertEqual(entry["learning"]["audio"]["offline_index_entry_id"], "photo")
+        book = next(item for item in entry["learning"]["collections"]
+                    if item["catalog_id"] == "book:qwerty:CET4_T")
+        self.assertEqual(book["source_payload"]["glosses_zh"], ["光合作用"])
+        self.assertEqual(book["source_payload"]["source_record_id"], None)
+        first = self.root / "core-v2-first.jsonl.gz"
+        second = self.root / "core-v2-second.jsonl.gz"
+        result = export_core(self.core, self.out, first)
+        self.assertEqual(result["entry_count"], 4)
+        self.assertEqual(export_core(self.core, self.out, second)["sha256"], result["sha256"])
+        with gzip.open(first, "rt", encoding="utf-8") as stream:
+            self.assertEqual(sum(1 for _ in stream), 4)
+        with self.assertRaises(FileExistsError):
+            export_core(self.core, self.out, first)
 
     def test_duplicate_core_entry_is_rejected(self):
         with gzip.open(self.core, "at", encoding="utf-8") as stream:

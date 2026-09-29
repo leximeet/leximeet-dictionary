@@ -11,7 +11,7 @@ from pathlib import Path
 
 from .builder import canonical, lookup_key
 
-SCHEMA = "leximeet.learning.v1"
+SCHEMA = "leximeet.learning.v2"
 BOOKS = (
     ("CET4_T", "四级词汇", "exam"),
     ("CET6_T", "六级词汇", "exam"),
@@ -19,6 +19,8 @@ BOOKS = (
     ("IELTS_3_T", "雅思词汇", "exam"),
     ("TOEFL_3_T", "托福词汇", "exam"),
     ("GRE_3_T", "GRE 词汇", "exam"),
+    ("SAT_3_T", "SAT 词汇", "exam"),
+    ("GMAT_3_T", "GMAT 词汇", "exam"),
     ("itVocabulary", "计算机专业英语", "subject"),
     ("BIOmedical", "生物医学专业英语", "subject"),
 )
@@ -55,12 +57,12 @@ def _create(db: sqlite3.Connection) -> None:
     CREATE TABLE catalogs(
         catalog_id TEXT PRIMARY KEY, title_zh TEXT NOT NULL,
         category TEXT NOT NULL, source TEXT NOT NULL,
-        method TEXT NOT NULL, rights_status TEXT NOT NULL
+        method TEXT NOT NULL
     );
     CREATE TABLE members(
         catalog_id TEXT NOT NULL, entry_id TEXT NOT NULL,
         position INTEGER NOT NULL, sense_ids TEXT NOT NULL,
-        match_method TEXT NOT NULL,
+        match_method TEXT NOT NULL, source_payload TEXT NOT NULL,
         PRIMARY KEY(catalog_id, entry_id),
         FOREIGN KEY(catalog_id) REFERENCES catalogs(catalog_id)
     );
@@ -154,39 +156,38 @@ def build_learning(core: Path, out: Path, lock_path: Path,
 
         for code, title in EXAMS.items():
             catalog_id = f"exam:ecdict:{code}"
-            db.execute("INSERT INTO catalogs VALUES (?,?,?,?,?,?)",
+            db.execute("INSERT INTO catalogs VALUES (?,?,?,?,?)",
                        (catalog_id, f"{title} · ECDICT 标签", "exam", "ecdict:bc015ed2",
-                        "词条级 tag；按历史词频、词头排序，非原版教材顺序", "source-published"))
+                        "词条级 tag；按历史词频、词头排序，非原版教材顺序"))
             ordered = sorted(by_exam[code], key=lambda item: (
                 item["ecdict"]["frequency_ranks"].get("frq")
                 or item["ecdict"]["frequency_ranks"].get("bnc") or 10**12,
                 item["lookup_key"], item["entry_id"]))
             for pos, entry in enumerate(ordered, 1):
-                db.execute("INSERT INTO members VALUES (?,?,?,?,?)",
-                           (catalog_id, entry["entry_id"], pos, "[]", "source-tag"))
+                db.execute("INSERT INTO members VALUES (?,?,?,?,?,?)",
+                           (catalog_id, entry["entry_id"], pos, "[]", "source-tag", "{}"))
             counters["ecdict_members"] += len(ordered)
 
         for subject, (title, topic_codes) in SUBJECTS.items():
             catalog_id = f"subject:topic:{subject}"
-            db.execute("INSERT INTO catalogs VALUES (?,?,?,?,?,?)",
+            db.execute("INSERT INTO catalogs VALUES (?,?,?,?,?)",
                        (catalog_id, f"{title} · 义项领域", "subject", "open-dictionary:v2.0",
-                        "义项 topics：" + ", ".join(topic_codes), "source-published"))
+                        "义项 topics：" + ", ".join(topic_codes)))
             ordered = sorted(by_subject[subject], key=lambda pair: (
                 pair[0]["ecdict"]["frequency_ranks"].get("frq")
                 or pair[0]["ecdict"]["frequency_ranks"].get("bnc") or 10**12,
                 pair[0]["lookup_key"], pair[0]["entry_id"]))
             for pos, (entry, sense_ids) in enumerate(ordered, 1):
-                db.execute("INSERT INTO members VALUES (?,?,?,?,?)",
-                           (catalog_id, entry["entry_id"], pos, canonical(sense_ids), "sense-topic"))
+                db.execute("INSERT INTO members VALUES (?,?,?,?,?,?)",
+                           (catalog_id, entry["entry_id"], pos, canonical(sense_ids), "sense-topic", "{}"))
             counters["subject_members"] += len(ordered)
 
         if qwerty_root:
             for book_id, title, category in BOOKS:
                 catalog_id = f"book:qwerty:{book_id}"
-                db.execute("INSERT INTO catalogs VALUES (?,?,?,?,?,?)",
+                db.execute("INSERT INTO catalogs VALUES (?,?,?,?,?)",
                            (catalog_id, title, category, f"qwerty-learner:{lock['qwerty_commit']}:{book_id}",
-                            "保留词表原顺序；只导入词头与归属，不导入翻译和音标",
-                            "candidate-upstream-rights-unverified"))
+                            "保留词表原顺序及每书的补充译文、英美音标"))
                 words = json.loads((qwerty_root / f"{book_id}.json").read_text(encoding="utf-8"))
                 seen = set()
                 for source_pos, record in enumerate(words, 1):
@@ -214,9 +215,27 @@ def build_learning(core: Path, out: Path, lock_path: Path,
                         })
                         continue
                     seen.add(entry_id)
-                    db.execute("INSERT INTO members VALUES (?,?,?,?,?)",
-                               (catalog_id, entry_id, source_pos, "[]", method))
+                    # 不覆盖主词义；同一词在不同词书里的译文和音标各自保存。
+                    raw_glosses = record.get("trans")
+                    glosses = (raw_glosses if isinstance(raw_glosses, list)
+                               else [raw_glosses] if isinstance(raw_glosses, str) else [])
+                    source_payload = {
+                        "source_word": word,
+                        "source_record_id": None,
+                        "glosses_zh": [item.strip() for item in glosses
+                                       if isinstance(item, str) and item.strip()],
+                        "pronunciations": [
+                            {"region": region, "raw_text": record[key].strip()}
+                            for key, region in (("usphone", "en-US"), ("ukphone", "en-GB"))
+                            if isinstance(record.get(key), str) and record[key].strip()
+                        ],
+                    }
+                    db.execute("INSERT INTO members VALUES (?,?,?,?,?,?)",
+                               (catalog_id, entry_id, source_pos, "[]", method,
+                                canonical(source_payload)))
                     counters["qwerty_members"] += 1
+                    counters["qwerty_gloss_members"] += bool(source_payload["glosses_zh"])
+                    counters["qwerty_pronunciation_members"] += bool(source_payload["pronunciations"])
 
         if gpt_file:
             candidates = defaultdict(list)
@@ -282,12 +301,12 @@ def list_catalogs(db_path: Path) -> list[dict]:
     """词书目录：考试词表和专业分类用同一个查询入口。"""
     with sqlite3.connect(f"file:{db_path}?mode=ro", uri=True) as db:
         rows = db.execute("""
-            SELECT c.catalog_id,c.title_zh,c.category,c.source,c.method,c.rights_status,
+            SELECT c.catalog_id,c.title_zh,c.category,c.source,c.method,
                    count(m.entry_id) FROM catalogs c LEFT JOIN members m USING(catalog_id)
             GROUP BY c.catalog_id ORDER BY c.category,c.catalog_id
         """).fetchall()
     return [dict(zip(("catalog_id", "title_zh", "category", "source", "method",
-                      "rights_status", "entry_count"), row)) for row in rows]
+                      "entry_count"), row)) for row in rows]
 
 
 def list_members(db_path: Path, catalog_id: str, limit: int = 50, offset: int = 0) -> list[dict]:
@@ -295,31 +314,38 @@ def list_members(db_path: Path, catalog_id: str, limit: int = 50, offset: int = 
     if not 1 <= limit <= 1000 or offset < 0:
         raise ValueError("limit 必须是 1..1000，offset 不得为负数")
     with sqlite3.connect(f"file:{db_path}?mode=ro", uri=True) as db:
-        rows = db.execute("""SELECT entry_id,position,sense_ids,match_method FROM members
+        rows = db.execute("""SELECT entry_id,position,sense_ids,match_method,source_payload FROM members
                              WHERE catalog_id=? ORDER BY position LIMIT ? OFFSET ?""",
                           (catalog_id, limit, offset)).fetchall()
     return [{"entry_id": row[0], "position": row[1], "sense_ids": json.loads(row[2]),
-             "match_method": row[3]} for row in rows]
+             "match_method": row[3], "source_payload": json.loads(row[4])} for row in rows]
 
 
-def learning_for_entry(db_path: Path, entry_id: str) -> dict:
-    """按词条 ID 查询其词书归属和助记候选，供桌面端/插件端整合词卡。"""
-    with sqlite3.connect(f"file:{db_path}?mode=ro", uri=True) as db:
-        memberships = db.execute("""SELECT m.catalog_id,m.position,m.sense_ids,c.category,c.rights_status
-                                    FROM members m JOIN catalogs c USING(catalog_id)
-                                    WHERE m.entry_id=? ORDER BY m.catalog_id""", (entry_id,)).fetchall()
-        notes = db.execute("""SELECT source,kind,format,content,review_status,provenance FROM mnemonics
-                              WHERE entry_id=? ORDER BY source""", (entry_id,)).fetchall()
+def _learning_for_entry_db(db: sqlite3.Connection, entry_id: str) -> dict:
+    """共用已打开的只读连接，批量组装词卡时避免逐词重连 SQLite。"""
+    memberships = db.execute("""SELECT m.catalog_id,m.position,m.sense_ids,c.category,c.source,
+                                       m.source_payload
+                                FROM members m JOIN catalogs c USING(catalog_id)
+                                WHERE m.entry_id=? ORDER BY m.catalog_id""", (entry_id,)).fetchall()
+    notes = db.execute("""SELECT source,kind,format,content,review_status,provenance FROM mnemonics
+                          WHERE entry_id=? ORDER BY source""", (entry_id,)).fetchall()
     return {
         "entry_id": entry_id,
         "catalogs": [{"catalog_id": r[0], "position": r[1], "sense_ids": json.loads(r[2]),
-                      "category": r[3], "rights_status": r[4]} for r in memberships],
+                      "category": r[3], "source": r[4],
+                      "source_payload": json.loads(r[5])} for r in memberships],
         "mnemonics": [
             {**dict(zip(("source", "kind", "format", "content", "review_status"), r[:5])),
              "provenance": json.loads(r[5])}
             for r in notes
         ],
     }
+
+
+def learning_for_entry(db_path: Path, entry_id: str) -> dict:
+    """按词条 ID 查询其词书归属和助记候选，供桌面端/插件端整合词卡。"""
+    with sqlite3.connect(f"file:{db_path}?mode=ro", uri=True) as db:
+        return _learning_for_entry_db(db, entry_id)
 
 
 def export_missing(core: Path, db_path: Path, out: Path) -> dict:
