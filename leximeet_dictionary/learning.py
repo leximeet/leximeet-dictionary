@@ -7,6 +7,7 @@ import hashlib
 import json
 import sqlite3
 from collections import defaultdict
+from contextlib import closing
 from pathlib import Path
 
 from .builder import canonical, lookup_key
@@ -299,7 +300,7 @@ def build_learning(core: Path, out: Path, lock_path: Path,
 
 def list_catalogs(db_path: Path) -> list[dict]:
     """词书目录：考试词表和专业分类用同一个查询入口。"""
-    with sqlite3.connect(f"file:{db_path}?mode=ro", uri=True) as db:
+    with closing(sqlite3.connect(f"file:{db_path.resolve()}?mode=ro", uri=True)) as db:
         rows = db.execute("""
             SELECT c.catalog_id,c.title_zh,c.category,c.source,c.method,
                    count(m.entry_id) FROM catalogs c LEFT JOIN members m USING(catalog_id)
@@ -313,7 +314,7 @@ def list_members(db_path: Path, catalog_id: str, limit: int = 50, offset: int = 
     """按目录顺序翻页；sense_ids 为空表示词条级归属，不表示任意义项均属该领域。"""
     if not 1 <= limit <= 1000 or offset < 0:
         raise ValueError("limit 必须是 1..1000，offset 不得为负数")
-    with sqlite3.connect(f"file:{db_path}?mode=ro", uri=True) as db:
+    with closing(sqlite3.connect(f"file:{db_path.resolve()}?mode=ro", uri=True)) as db:
         rows = db.execute("""SELECT entry_id,position,sense_ids,match_method,source_payload FROM members
                              WHERE catalog_id=? ORDER BY position LIMIT ? OFFSET ?""",
                           (catalog_id, limit, offset)).fetchall()
@@ -344,7 +345,7 @@ def _learning_for_entry_db(db: sqlite3.Connection, entry_id: str) -> dict:
 
 def learning_for_entry(db_path: Path, entry_id: str) -> dict:
     """按词条 ID 查询其词书归属和助记候选，供桌面端/插件端整合词卡。"""
-    with sqlite3.connect(f"file:{db_path}?mode=ro", uri=True) as db:
+    with closing(sqlite3.connect(f"file:{db_path.resolve()}?mode=ro", uri=True)) as db:
         return _learning_for_entry_db(db, entry_id)
 
 
@@ -352,7 +353,7 @@ def export_missing(core: Path, db_path: Path, out: Path) -> dict:
     """导出尚无助记内容的核心词及最小真实释义，供后续 AI 生成与复核。"""
     if out.exists():
         raise FileExistsError(f"输出已存在，请指定新路径：{out}")
-    with sqlite3.connect(f"file:{db_path}?mode=ro", uri=True) as db:
+    with closing(sqlite3.connect(f"file:{db_path.resolve()}?mode=ro", uri=True)) as db:
         expected = db.execute(
             "SELECT value FROM metadata WHERE key='base_core_sha256'").fetchone()
         if not expected or expected[0] != _hash(core):

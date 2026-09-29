@@ -1,0 +1,122 @@
+name: Build 0.0.2 core dictionary draft
+
+on:
+  workflow_dispatch:
+
+# 只在维护者手动运行且固定 tag 已存在时上传草稿 Release。
+permissions:
+  contents: write
+
+concurrency:
+  group: dictionary-v0.0.2-draft
+  cancel-in-progress: false
+
+jobs:
+  core-dictionary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: 检出固定的 0.0.2 源码
+        uses: actions/checkout@v4
+        with:
+          ref: refs/tags/v0.0.2
+          persist-credentials: false
+      - name: 检出固定 qwerty 词书
+        uses: actions/checkout@v4
+        with:
+          repository: RealKai42/qwerty-learner
+          ref: 122acd90b4079dd040c28a14356447f6553cff83
+          path: build/upstream/qwerty
+          persist-credentials: false
+      - name: 检出固定学习文章
+        uses: actions/checkout@v4
+        with:
+          repository: Ceelog/DictionaryByGPT4
+          ref: 8c9b050b653108145a94a559c816e0e499ef1627
+          path: build/upstream/gpt
+          persist-credentials: false
+      - name: 配置 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: 测试代码并核对固定来源
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m compileall -q leximeet_dictionary
+          python -m unittest discover -s tests -v
+          python - <<'PY'
+          import json, subprocess
+          from pathlib import Path
+          lock = json.loads(Path('learning-sources.lock.json').read_text())
+          for path, key in [('build/upstream/qwerty', 'qwerty_commit'),
+                            ('build/upstream/gpt', 'dictionary_by_gpt4_commit')]:
+              actual = subprocess.check_output(['git', '-C', path, 'rev-parse', 'HEAD'], text=True).strip()
+              assert actual.startswith(lock[key]), (path, actual, lock[key])
+          PY
+      - name: 只下载 0.0.1 核心版所需资产
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          command -v gh
+          mkdir -p build/base-release
+          gh release download v0.0.1 --repo "$GITHUB_REPOSITORY" \
+            --dir build/base-release --pattern release.json
+          mapfile -t core_assets < <(python - <<'PY'
+          import json
+          from pathlib import Path
+          manifest = json.loads(Path('build/base-release/release.json').read_text())
+          assert manifest['schema_version'] == 'leximeet.release.v1'
+          assert manifest['dictionary_version'] == '0.0.1'
+          print('\n'.join(manifest['editions']['core']['assets']))
+          PY
+          )
+          patterns=()
+          for asset in "${core_assets[@]}"; do patterns+=(--pattern "$asset"); done
+          gh release download v0.0.1 --repo "$GITHUB_REPOSITORY" \
+            --dir build/base-release "${patterns[@]}"
+          python -m leximeet_dictionary release-verify build/base-release --edition core --deep
+      - name: 构建并深度校验 0.0.2 核心词包
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m leximeet_dictionary learning-build \
+            --core build/base-release/core.entries.jsonl.gz \
+            --qwerty-dicts build/upstream/qwerty/public/dicts \
+            --gpt-file build/upstream/gpt/gptwords.json \
+            --out build/learning-v0.0.2.sqlite
+          python -m leximeet_dictionary learning-verify \
+            --core build/base-release/core.entries.jsonl.gz \
+            --db build/learning-v0.0.2.sqlite
+          python -m leximeet_dictionary core-release-build \
+            --base build/base-release --db build/learning-v0.0.2.sqlite \
+            --out dist/v0.0.2
+          python -m leximeet_dictionary core-release-verify dist/v0.0.2 --deep
+          df -h .
+      - name: 上传已校验的草稿 Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if gh release view v0.0.2 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo 'v0.0.2 Release 已存在；流水线不会覆盖。' >&2
+            exit 1
+          fi
+          gh release create v0.0.2 dist/v0.0.2/* \
+            --repo "$GITHUB_REPOSITORY" --draft --verify-tag \
+            --title 'LexiMeet Dictionary 0.0.2 Core' --notes-file docs/RELEASE_NOTES_0.0.2.md
+          gh release view v0.0.2 --repo "$GITHUB_REPOSITORY" \
+            --json isDraft,assets > build/remote-release.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          remote = json.loads(Path('build/remote-release.json').read_text())
+          expected = {p.name for p in Path('dist/v0.0.2').iterdir() if p.is_file()}
+          actual = {a['name'] for a in remote['assets']}
+          assert remote['isDraft'] and actual == expected, (remote['isDraft'], expected - actual, actual - expected)
+          PY
+          gh release download v0.0.2 --repo "$GITHUB_REPOSITORY" --dir build/remote-check
+          python -m leximeet_dictionary core-release-verify build/remote-check

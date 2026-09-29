@@ -12,6 +12,7 @@ from leximeet_dictionary.entry_v2 import export_core, read_entry
 from leximeet_dictionary.learning import (
     BOOKS, build_learning, export_missing, learning_for_entry, list_catalogs, list_members,
 )
+from leximeet_dictionary.learning_verify import verify_learning
 
 
 def _write_json(path: Path, value) -> dict:
@@ -160,6 +161,15 @@ class LearningTest(unittest.TestCase):
         self.assertEqual(report["entries_without_learning_material"], 3)
         with sqlite3.connect(self.out) as db:
             self.assertEqual(db.execute("SELECT count(*) FROM mnemonics").fetchone()[0], 1)
+
+    def test_learning_verifier_rejects_missing_content_and_wrong_sense(self):
+        build_learning(self.core, self.out, self.lock, self.dicts, self.gpt)
+        self.assertEqual(verify_learning(self.core, self.out)["missing_mnemonics"], 2)
+        with sqlite3.connect(self.out) as db:
+            db.execute("UPDATE members SET sense_ids='[\"unknown-sense\"]' "
+                       "WHERE catalog_id='subject:topic:biology'")
+        with self.assertRaisesRegex(ValueError, "成员义项"):
+            verify_learning(self.core, self.out)
 
 
 if __name__ == "__main__":

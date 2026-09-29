@@ -5,6 +5,7 @@ from __future__ import annotations
 import gzip
 import json
 import sqlite3
+from contextlib import closing
 from pathlib import Path
 
 from .builder import canonical, file_hash
@@ -56,7 +57,7 @@ def _check_source(db: sqlite3.Connection, core: Path) -> None:
 
 def read_entry(core: Path, db_path: Path, word: str) -> dict | None:
     """为调试按词头组装一个完整 JSON；正式客户端可从自己的本地索引读取。"""
-    with sqlite3.connect(f"file:{db_path}?mode=ro", uri=True) as db:
+    with closing(sqlite3.connect(f"file:{db_path.resolve()}?mode=ro", uri=True)) as db:
         _check_source(db, core)
         with gzip.open(core, "rt", encoding="utf-8") as stream:
             for line in stream:
@@ -73,7 +74,7 @@ def export_core(core: Path, db_path: Path, out: Path) -> dict:
     out.parent.mkdir(parents=True, exist_ok=True)
     count = 0
     try:
-        with sqlite3.connect(f"file:{db_path}?mode=ro", uri=True) as db:
+        with closing(sqlite3.connect(f"file:{db_path.resolve()}?mode=ro", uri=True)) as db:
             _check_source(db, core)
             with gzip.open(core, "rt", encoding="utf-8") as source, out.open("wb") as raw:
                 with gzip.GzipFile(filename="", mode="wb", fileobj=raw, mtime=0,

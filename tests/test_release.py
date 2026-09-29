@@ -11,8 +11,10 @@ import unittest
 from pathlib import Path
 
 from leximeet_dictionary.builder import file_hash
+from leximeet_dictionary.learning import build_learning
 from leximeet_dictionary.offline_audio import _fallback_text, _synthesize, synthesis_lock
 from leximeet_dictionary.release import assemble_sqlite, build_release, extract_audio, verify_release
+from leximeet_dictionary.release_v2 import build_core_release, verify_core_release
 
 
 def fixture(root: Path) -> tuple[Path, Path]:
@@ -29,7 +31,10 @@ def fixture(root: Path) -> tuple[Path, Path]:
             ("gamma", "gamma", "ecdict-fallback", None, [])):
         payload = {"schema_version": "leximeet.entry.v1", "entry_id": entry_id,
                    "headword": headword, "origin": origin, "ecdict": {"exam_tags": tags},
-                   "senses": [{"short_gloss": headword}]}
+                   "lookup_key": headword, "memory_hook_zh": "记住 " + headword if rank else None,
+                   "senses": [{"sense_id": "sense-" + entry_id,
+                               "pos": "noun", "topics": [], "short_gloss": headword}]}
+        payload["ecdict"]["frequency_ranks"] = {"frq": rank} if rank else {}
         rows.append((entry_id, headword, headword, origin, rank,
                      json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))))
     with sqlite3.connect(source / "dictionary.sqlite") as db:
@@ -63,6 +68,34 @@ def fixture(root: Path) -> tuple[Path, Path]:
 
 
 class ReleaseTests(unittest.TestCase):
+    def test_v2_core_release_records_partial_learning_and_preserves_audio(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            source, cache = fixture(root)
+            base = root / "base-release"
+            build_release(source, cache, base, shard_bytes=1024)
+            core = base / "core.entries.jsonl.gz"
+            lock = root / "learning-sources.lock.json"
+            lock.write_text(json.dumps({"schema_version": "leximeet.learning-sources.v1"}),
+                            encoding="utf-8")
+            learning_db = root / "learning.sqlite"
+            report = build_learning(core, learning_db, lock)
+            self.assertEqual(report["entries_without_learning_material"], 1)
+            output = root / "v2-release"
+            manifest = build_core_release(base, learning_db, lock, output)
+            repeated = build_core_release(base, learning_db, lock, root / "v2-release-again")
+            self.assertEqual(manifest, repeated)
+            self.assertEqual(set(manifest["editions"]), {"core"})
+            self.assertEqual(manifest["editions"]["core"]["entry_count"], 2)
+            self.assertEqual(manifest["editions"]["core"]["mnemonic_covered_entry_count"], 1)
+            self.assertEqual(verify_core_release(output, deep=True)["audio_covered_entry_count"], 2)
+            shard = next(name for name in manifest["assets"] if name.endswith(".pack"))
+            self.assertEqual(file_hash(output / shard), file_hash(base / shard))
+            with (output / shard).open("ab") as stream:
+                stream.write(b"damage")
+            with self.assertRaisesRegex(ValueError, "资产损坏"):
+                verify_core_release(output)
+
     def test_shared_core_shards_and_full_coverage(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

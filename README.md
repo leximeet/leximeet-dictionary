@@ -66,4 +66,4 @@ python3 -m leximeet_dictionary lookup --db /tmp/leximeet-dictionary.sqlite bank
 
 感谢这些项目、词典编纂者、录音作者和维护者。具体版本、逐层许可、真人录音署名及权利处理方式见 [DATA-LICENSE.md](DATA-LICENSE.md) 和随包 `notice-*` 文件。仓库代码使用 [GPL-3.0](LICENSE)；不同数据和音频保留各自的来源与许可。若发现内容侵权或需要修订，请联系作者并说明具体词条或文件，维护者核查后移除或替换。
 
-**下一步：核心版学习词典。** 0.0.2 计划让核心版按考试词书和专业领域学习，并增加来源明确的助记材料；[设计](docs/DESIGN_0.0.2.md)、[进度](docs/TASKS_0.0.2.md)和[真实词条及 v2 JSON 结构](docs/WORD_ENTRY_MODEL.md)可直接查看。现有 0.0.1 Release 没有这些学习目录；完整版的相同补充与全词音频等核心结构在 1.0.0 稳定后再做。参与修订见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+**下一步：核心版学习词典。** 0.0.2 正在加入考试词书、专业领域和现有助记材料；[设计](docs/DESIGN_0.0.2.md)、[进度](docs/TASKS_0.0.2.md)、[真实词条结构](docs/WORD_ENTRY_MODEL.md)与[客户端接入协议](docs/CLIENT_CONTRACT_0.0.2.md)可直接查看。本地试产有 84,491 词带助记、33,411 词暂无助记，后者在 1.0.0 稳定后与完整版共同补齐。0.0.2 尚未发布；完整版的相同补充与全词音频亦在核心结构稳定后再做。参与修订见 [CONTRIBUTING.md](CONTRIBUTING.md)。

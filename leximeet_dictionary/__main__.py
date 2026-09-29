@@ -106,6 +106,17 @@ def parser() -> argparse.ArgumentParser:
     learning_export.add_argument("--core", type=Path, required=True)
     learning_export.add_argument("--db", type=Path, required=True)
     learning_export.add_argument("--out", type=Path, required=True)
+    learning_verify = commands.add_parser("learning-verify", help="核验学习索引与核心词卡引用")
+    learning_verify.add_argument("--core", type=Path, required=True)
+    learning_verify.add_argument("--db", type=Path, required=True)
+    core_release_build = commands.add_parser("core-release-build", help="构建 0.0.2 独立核心词包")
+    core_release_build.add_argument("--base", type=Path, required=True, help="已校验的 0.0.1 Release 目录")
+    core_release_build.add_argument("--db", type=Path, required=True)
+    core_release_build.add_argument("--lock", type=Path, default=Path("learning-sources.lock.json"))
+    core_release_build.add_argument("--out", type=Path, required=True)
+    core_release_verify = commands.add_parser("core-release-verify", help="核验 0.0.2 核心词包")
+    core_release_verify.add_argument("directory", type=Path)
+    core_release_verify.add_argument("--deep", action="store_true")
     return root
 
 
@@ -123,7 +134,8 @@ def main() -> None:
         result = build(inputs, args.lock, args.out, editorial_path=args.editorial)
     elif args.command == "learning-build":
         from .learning import build_learning
-        result = build_learning(args.core, args.out, args.lock, args.qwerty_dicts, args.gpt_file)
+        result = build_learning(args.core, args.out, args.lock, args.qwerty_dicts,
+                                args.gpt_file)
     elif args.command == "learning-catalogs":
         from .learning import list_catalogs
         result = list_catalogs(args.db)
@@ -142,6 +154,15 @@ def main() -> None:
     elif args.command == "learning-export":
         from .entry_v2 import export_core
         result = export_core(args.core, args.db, args.out)
+    elif args.command == "learning-verify":
+        from .learning_verify import verify_learning
+        result = verify_learning(args.core, args.db)
+    elif args.command == "core-release-build":
+        from .release_v2 import build_core_release
+        result = build_core_release(args.base, args.db, args.lock, args.out)
+    elif args.command == "core-release-verify":
+        from .release_v2 import verify_core_release
+        result = verify_core_release(args.directory, args.deep)
     elif args.command == "lookup":
         result = {"entries": lookup(args.db, args.word)}
         if args.wordnet:
