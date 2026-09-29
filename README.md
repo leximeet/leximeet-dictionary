@@ -8,7 +8,8 @@
 <h1>LexiMeet Dictionary · 词遇开放词典</h1>
 <p><strong>一份可核验、可离线发音、供桌面端与浏览器插件共用的英汉词典。</strong></p>
 <p>
-  <a href="https://github.com/leximeet/leximeet-dictionary/releases/tag/v0.0.1">下载 0.0.1</a> ·
+  <a href="https://github.com/leximeet/leximeet-dictionary/releases/tag/v0.0.2">下载 0.0.2 核心版</a> ·
+  <a href="https://github.com/leximeet/leximeet-dictionary/releases/tag/v0.0.1">下载 0.0.1 完整版</a> ·
   <a href="docs/CLIENT_CONTRACT.md">词包接入</a> ·
   <a href="docs/BUILD.md">从源码构建</a> ·
   <a href="DATA-LICENSE.md">数据来源</a> ·
@@ -25,6 +26,8 @@
 | **完整版 `full`** | 811,092 条词条；共享核心词的 117,902 条离线音频 | 用户主动下载，校验后替换 |
 
 正式词包见 [v0.0.1 Release](https://github.com/leximeet/leximeet-dictionary/releases/tag/v0.0.1)，客户端以同版 `release.json` 中的文件大小和 SHA-256 为准。两版词卡都保留完整内容；**非核心词在 0.0.1 没有随包音频**，端侧可按需使用在线朗读。核心音频包含 436 条逐文件署名的 Commons 真人录音和标明来源的本地合成录音；固定真人录音快照随源码提供，合成音色与真人录音不同。尚未发布的本地构建不能冒充 GitHub Release。
+
+[v0.0.2 Release](https://github.com/leximeet/leximeet-dictionary/releases/tag/v0.0.2) 提供升级后的**核心版**：117,902 条词卡均有离线音频，附 23 个学习目录，84,491 个词已有助记。它没有新版 `full`；需要全部词条的客户端仍使用 0.0.1 完整版。正式发布包以各自版本的 `release.json` 为准。
 
 ## 为什么做这份词典
 
@@ -70,4 +73,4 @@ python3 -m leximeet_dictionary lookup --db /tmp/leximeet-dictionary.sqlite bank
 
 感谢这些项目、词典编纂者、录音作者和维护者。具体版本、逐层许可、真人录音署名及权利处理方式见 [DATA-LICENSE.md](DATA-LICENSE.md) 和随包 `notice-*` 文件。仓库代码使用 [GPL-3.0](LICENSE)；不同数据和音频保留各自的来源与许可。若发现内容侵权或需要修订，请联系作者并说明具体词条或文件，维护者核查后移除或替换。
 
-**0.0.2：核心版学习词典。** 本版加入考试词书、专业领域和现有助记材料；[设计](docs/DESIGN_0.0.2.md)、[进度](docs/TASKS_0.0.2.md)、[真实词条结构](docs/WORD_ENTRY_MODEL.md)与[客户端接入协议](docs/CLIENT_CONTRACT_0.0.2.md)可直接查看。本地试产有 84,491 词带助记、33,411 词暂无助记，后者在 1.0.0 稳定后与完整版共同补齐。正式发布状态以 [GitHub Releases](https://github.com/leximeet/leximeet-dictionary/releases) 为准；完整版的相同补充与全词音频亦在核心结构稳定后再做。参与修订见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+**0.0.2：核心版学习词典。** 本版加入考试词书、专业领域和现有助记材料；[设计](docs/DESIGN_0.0.2.md)、[进度](docs/TASKS_0.0.2.md)、[真实词条结构](docs/WORD_ENTRY_MODEL.md)与[客户端接入协议](docs/CLIENT_CONTRACT_0.0.2.md)可直接查看。正式词包有 84,491 词带助记、33,411 词暂无助记，后者在 1.0.0 稳定后与完整版共同补齐。完整版的相同补充与全词音频亦在核心结构稳定后再做。参与修订见 [CONTRIBUTING.md](CONTRIBUTING.md)。

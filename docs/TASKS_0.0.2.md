@@ -20,8 +20,8 @@
 | [x] | 抽查 GPT 候选并约定展示方式 | [抽查记录](qa/0.0.2/REVIEW.md)列出 2 篇已排除文章；其余材料保留 `ai-unreviewed`，接入协议要求折叠展示，发布包附来源声明。逐篇事实核验属于后续内容维护。 |
 | [x] | 抽查目录质量 | 专业目录首页顺序已修正；深检保证成员和义项引用有效，509 条 qwerty 未匹配记录只在 audit 中，不进入词书。词书归属不会自动改写义项 topic。 |
 | [x] | 用官方 0.0.1 资产复现 0.0.2 核心词包 | 正式 v0.0.1 的 13 个核心资产先通过深检，再产出 17 个 0.0.2 资产并通过深检：117,902 词全部有音频，84,491 词有助记。 |
-| [ ] | 远端运行 0.0.2 GitHub Actions | 先推送含自动工作流的 `main`，再推送指向同一提交的 `v0.0.2` tag；检查远端测试、深检和 17 个资产的哈希。 |
-| [ ] | 验收正式 Release | 工作流应在资产核验后自动把草稿发布；检查 Release 已公开、`release.json` 可下载且资产哈希一致。0.0.2 不验收客户端实现或练习题。 |
+| [x] | 远端运行 0.0.2 GitHub Actions | [`main` 测试](https://github.com/leximeet/leximeet-dictionary/actions/runs/36540184548)与 [`v0.0.2` 自动发布](https://github.com/leximeet/leximeet-dictionary/actions/runs/36540185667)均成功；后者完成固定来源检查、词包构建、深检和自动发布。 |
+| [x] | 验收正式 Release | [v0.0.2 Release](https://github.com/leximeet/leximeet-dictionary/releases/tag/v0.0.2) 已公开；清单列出 17 个资产，加上 `release.json` 共 18 个文件，逐项大小和 SHA-256 与 GitHub 一致，公开地址可直接下载清单。117,902 词均有音频，84,491 词有助记。0.0.2 不验收客户端实现或练习题。 |
 
 本地复现命令。`BASE` 必须是从[官方 v0.0.1 Release](https://github.com/leximeet/leximeet-dictionary/releases/tag/v0.0.1)下载的核心资产目录，下载步骤见[流水线](../.github/workflows/core-v0.0.2.yml)。本机旧 `dist/v0.0.1` 的音频与正式 Release 不同，不能作为 0.0.2 的固定输入。将 `/path/to` 换为自己的实际路径：
 
@@ -38,4 +38,4 @@ python3 -m leximeet_dictionary core-release-verify build/v0.0.2-candidate --deep
 python3 -m unittest discover -s tests -v
 ```
 
-词遇产品接入前以对应版本的公开 Release 清单为准；本地试产文件不能直接称为已发布的 0.0.2。`main` 推送或面向 `main` 的 PR 会运行轻量测试，只有 `v0.0.2` tag 推送会启动发布。0.0.1 的历史构建工作流仍可手动重放，但不会再次自动发布。
+词遇产品接入以对应版本的公开 Release 清单为准。`main` 推送或面向 `main` 的 PR 会运行轻量测试，`v0.0.2` tag 推送已自动完成本版发布。0.0.1 的历史构建工作流仍可手动重放，但不会再次自动发布。
