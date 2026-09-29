@@ -1,5 +1,5 @@
-docs(dictionary): 记录 0.0.2 正式发布验收
+docs(readme): 补齐来源致谢并整理首页
 
-记录 main 测试与 v0.0.2 tag 自动发布的成功运行。
-核对公开 release.json、17 个清单资产及 GitHub 的逐文件大小和 SHA-256。
-更新 README 下载入口、更新日志和任务清单的最终验收状态。
+补充 qwerty-learner 和 DictionaryByGPT4 在 0.0.2 中的实际贡献。
+加入测试、发布、版本及许可徽章，突出核心版与完整版的下载和接入入口。
+更新数据许可说明的发布状态与更新日志。

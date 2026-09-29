@@ -13,4 +13,4 @@
 
 感谢以上项目与贡献者。ECDICT 历史资料的逐字段权利链并非全部可独立核实；本项目按仓库许可保留署名并提供处理入口。如认为某个词条、字段或录音侵犯权利，请联系作者并提供内容位置与依据。维护者核查后会移除或替换相应使用，并重建后续词包。
 
-DictionaryByGPT4 与 qwerty-learner **没有内容进入 0.0.1 词包**。0.0.2 核心版开发输入包括固定版本的 qwerty 词书词头、顺序、补充译文和原始音标，以及 DictionaryByGPT4 学习文章；各自保留来源标识。0.0.2 发布包会附上 `notice-DICTIONARYBYGPT4-LICENSE.md`、`notice-QWERTY-LEARNER-LICENSE.md` 和来源锁文件。
+DictionaryByGPT4 与 qwerty-learner **没有内容进入 0.0.1 词包**。0.0.2 核心版输入包括固定版本的 qwerty 词书词头、顺序、补充译文和原始音标，以及 DictionaryByGPT4 学习文章；各自保留来源标识。0.0.2 发布包附有 `notice-DICTIONARYBYGPT4-LICENSE.md`、`notice-QWERTY-LEARNER-LICENSE.md` 和来源锁文件。

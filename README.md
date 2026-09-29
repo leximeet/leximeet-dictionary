@@ -5,61 +5,65 @@
   <img src="assets/brand/logo-light.png" width="360" alt="词遇 LexiMeet 标志">
 </picture>
 
-<h1>LexiMeet Dictionary · 词遇开放词典</h1>
-<p><strong>一份可核验、可离线发音、供桌面端与浏览器插件共用的英汉词典。</strong></p>
+<h1>LexiMeet Dictionary</h1>
+<p><strong>词遇词典 · 为桌面端和浏览器插件准备的离线英汉词包</strong></p>
 <p>
-  <a href="https://github.com/leximeet/leximeet-dictionary/releases/tag/v0.0.2">下载 0.0.2 核心版</a> ·
-  <a href="https://github.com/leximeet/leximeet-dictionary/releases/tag/v0.0.1">下载 0.0.1 完整版</a> ·
-  <a href="docs/CLIENT_CONTRACT.md">词包接入</a> ·
-  <a href="docs/BUILD.md">从源码构建</a> ·
-  <a href="DATA-LICENSE.md">数据来源</a> ·
-  <a href="CHANGELOG.md">更新记录</a>
+  <a href="https://github.com/leximeet/leximeet-dictionary/actions/workflows/test.yml"><img src="https://github.com/leximeet/leximeet-dictionary/actions/workflows/test.yml/badge.svg?branch=main" alt="Tests"></a>
+  <a href="https://github.com/leximeet/leximeet-dictionary/actions/workflows/core-v0.0.2.yml"><img src="https://github.com/leximeet/leximeet-dictionary/actions/workflows/core-v0.0.2.yml/badge.svg?event=push" alt="0.0.2 Release"></a>
+  <a href="https://github.com/leximeet/leximeet-dictionary/releases"><img src="https://img.shields.io/github/v/release/leximeet/leximeet-dictionary" alt="Latest release"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/leximeet/leximeet-dictionary" alt="Code license"></a>
+</p>
+<p>
+  <a href="https://github.com/leximeet/leximeet-dictionary/releases/tag/v0.0.2"><strong>下载核心版</strong></a> ·
+  <a href="https://github.com/leximeet/leximeet-dictionary/releases/tag/v0.0.1">下载完整版</a> ·
+  <a href="docs/CLIENT_CONTRACT_0.0.2.md">接入文档</a> ·
+  <a href="docs/WORD_ENTRY_MODEL.md">词条结构</a>
 </p>
 
 </div>
 
-词遇以 [open-dictionary v2.0](https://github.com/ahpxex/open-dictionary) 的完整学习词卡为主体，补入 ECDICT 的中文与缺词、Wiktionary 的少量功能词义项、CMUdict 音素和独立的 WordNet 概念索引。`0.0.1` 提供两个版本：核心词都有离线音频；完整版增加全部词条，分片下载并复用核心音频。
+以 [open-dictionary v2.0](https://github.com/ahpxex/open-dictionary) 的学习词卡为主体，结合 ECDICT 的中文与缺词、Wiktionary 的部分功能词义项、CMUdict 音素和 WordNet 概念索引。0.0.2 又加入考试与专业词书，以及有来源的助记材料；每层数据保留来源，发布包附逐文件校验信息。
 
-| 版本 | 词条范围 | 使用场景 |
-| --- | ---: | --- |
-| **核心版 `core`** | 117,902 条：全部 84,212 条 open-dictionary 词卡 + 33,690 条有频率或考试依据的补充词；117,902 条离线音频 | 桌面端、插件端内置 |
-| **完整版 `full`** | 811,092 条词条；共享核心词的 117,902 条离线音频 | 用户主动下载，校验后替换 |
+## 选择词包
 
-正式词包见 [v0.0.1 Release](https://github.com/leximeet/leximeet-dictionary/releases/tag/v0.0.1)，客户端以同版 `release.json` 中的文件大小和 SHA-256 为准。两版词卡都保留完整内容；**非核心词在 0.0.1 没有随包音频**，端侧可按需使用在线朗读。核心音频包含 436 条逐文件署名的 Commons 真人录音和标明来源的本地合成录音；固定真人录音快照随源码提供，合成音色与真人录音不同。尚未发布的本地构建不能冒充 GitHub Release。
+| 发布包 | 内容 | 适合场景 |
+| --- | --- | --- |
+| **[v0.0.2 核心版](https://github.com/leximeet/leximeet-dictionary/releases/tag/v0.0.2)** | 117,902 条词卡及逐词离线音频；23 个考试与专业学习目录；84,491 词有助记 | 桌面端、插件端内置与按词书学习 |
+| **[v0.0.1 完整版](https://github.com/leximeet/leximeet-dictionary/releases/tag/v0.0.1)** | 811,092 条词条；分片下载，复用核心词离线音频 | 用户主动下载全部词条 |
 
-[v0.0.2 Release](https://github.com/leximeet/leximeet-dictionary/releases/tag/v0.0.2) 提供升级后的**核心版**：117,902 条词卡均有离线音频，附 23 个学习目录，84,491 个词已有助记。它没有新版 `full`；需要全部词条的客户端仍使用 0.0.1 完整版。正式发布包以各自版本的 `release.json` 为准。
+0.0.2 只发布核心版；完整版仍取自 0.0.1。非核心词尚无随包音频，可以由消费端按需在线朗读。每个版本都以自身 Release 的 `release.json` 为下载和校验入口。
 
 ## 为什么做这份词典
 
-| 能力 | open-dictionary v2.0 | ECDICT | LexiMeet 0.0.1 |
+| 能力 | open-dictionary v2.0 | ECDICT | LexiMeet Dictionary |
 | --- | --- | --- | --- |
-| 词条 | 84,212 条策展词卡 | 770,611 行原始 CSV | 合并后 811,092 条；核心版完整收录主词库 |
-| 释义 | 学习者向逐义词卡 | 词条级中文/英文回退 | 主词卡保留逐义结构，缺词明确标记为词条级回退 |
-| 标签 | 义项领域与用法 | 词条考试标签与历史频率 | 保留各自作用域，避免把考试标签误贴到某个义项 |
-| 发音 | IPA 与部分在线音频线索 | 旧式音标字段 | IPA/ARPABET 分开记录；核心词随包离线音频 |
-| 交付 | 上游数据格式 | CSV | JSONL、分片 SQLite、共享音频分片与逐文件 SHA-256 |
+| 词条 | 84,212 条策展词卡 | 770,611 行原始 CSV | 核心版收齐主词卡；完整版合并为 811,092 条 |
+| 释义与标签 | 逐义解释、领域与用法 | 中文回退、词条级考试标签 | 保留义项与词条各自的作用域，不把补充译文覆盖成主释义 |
+| 学习 | 词卡中的短助记 | 考试标签与历史词频 | 有序词书、专业目录及独立的助记材料 |
+| 发音 | IPA 与在线音频线索 | 旧式音标字段 | IPA/ARPABET 分开记录，核心词逐词离线发音 |
+| 交付 | 上游数据格式 | CSV | JSONL、SQLite、音频分片与逐文件 SHA-256 |
 
-优势是**完整词卡、广覆盖与可校验交付的组合**。ECDICT 缺词多数没有人工整理的逐义解释，WordNet 概念也尚未与具体义项自动对齐；词遇不把这些内容伪装成已审校词义。详细来源和数量见 [词典总览](docs/DICTIONARY_OVERVIEW.md)。
+ECDICT 补词多数没有人工整理的逐义解释，WordNet 概念也尚未与具体义项自动对齐；词遇不会把这些内容伪装成已审校词义。来源和数量见[词典总览](docs/DICTIONARY_OVERVIEW.md)。
 
 ## 接入与使用
 
-消费端从固定版本的 `release.json` 读取 `core.assets` 或 `full.assets`。下载文件先按字节数和 SHA-256 校验，再按 `sqlite.parts` 拼接完整版 SQLite；`.pack` 内每段 Ogg 按索引的 `offset`、`bytes` 读取。完整版引用核心音频分片，下载中断时继续使用已安装的核心版。用户笔记、单词本与自定义标签存于词包之外。
+消费端从固定版本的 `release.json` 读取 `editions.core.assets` 或 `editions.full.assets`，先按字节数和 SHA-256 校验，再安装词包。0.0.1 完整版的 SQLite 需要按 `sqlite.parts` 拼接；音频按索引中的 `offset`、`bytes` 从 `.pack` 读取。与旧版同名同哈希的核心音频分片可以复用。用户笔记、单词本和自定义标签存于词包之外。
 
 ```bash
-# 校验发布目录中的核心版和完整版；--deep 会逐词检查索引、音频字节和 SQLite。
-python3 -m leximeet_dictionary release-verify dist/v0.0.1 --edition core --deep
+# 已下载对应 Release 的全部所需资产后，深度校验发布目录。
+python3 -m leximeet_dictionary core-release-verify dist/v0.0.2 --deep
 python3 -m leximeet_dictionary release-verify dist/v0.0.1 --edition full --deep
 
-# 校验分片并拼接查询库；发音按音频索引读取。
+# 使用 0.0.1 完整版时，校验分片并拼接查询库。
 python3 -m leximeet_dictionary release-assemble dist/v0.0.1 --out /tmp/leximeet-dictionary.sqlite
 python3 -m leximeet_dictionary lookup --db /tmp/leximeet-dictionary.sqlite bank
 ```
 
-从零生成固定数据、续跑音频和分片发包见 [构建说明](docs/BUILD.md)；应用的下载与原子替换步骤见 [客户端协议](docs/CLIENT_CONTRACT.md)。当前仓库提供可消费的数据协议和参考校验器，桌面端与插件端的原生接入由各自项目完成。
+应用的下载与原子替换步骤见 [0.0.2 核心版协议](docs/CLIENT_CONTRACT_0.0.2.md)和 [0.0.1 完整版协议](docs/CLIENT_CONTRACT.md)；从源码构建见[构建说明](docs/BUILD.md)。仓库提供词包与参考校验器，桌面端和插件端的原生接入由各自项目完成。
 
 ## 自动化检查与发布
 
-推送到 `main` 或向 `main` 提交 PR 会运行代码检查和单元测试。0.0.2 源码准备好后，先推送 `main`，再推送指向同一提交的 `v0.0.2` tag；tag 会自动触发核心词包构建和深度校验。流水线先上传 Release 草稿，核对 GitHub 上每个资产的大小和 SHA-256，全部通过后自动发布。若草稿创建后校验失败，它会保留供排查；修复后可重跑工作流。[进度清单](docs/TASKS_0.0.2.md)记录远端验收状态。0.0.1 的构建工作流仅保留为历史版本复现入口。
+推送到 `main` 或向 `main` 提交 PR 会运行单元测试。`v0.0.2` tag 推送已触发[固定来源构建与深检](https://github.com/leximeet/leximeet-dictionary/actions/runs/36540185667)：流水线先创建草稿，核对 GitHub 上每个资产的大小和 SHA-256，全部通过后自动发布。[更新记录](CHANGELOG.md)、[任务清单](docs/TASKS_0.0.2.md)和[贡献指南](CONTRIBUTING.md)可查看当前结果与参与方式。
 
 ## 来源与致谢
 
@@ -68,9 +72,11 @@ python3 -m leximeet_dictionary lookup --db /tmp/leximeet-dictionary.sqlite bank
 | [open-dictionary](https://github.com/ahpxex/open-dictionary) 与 English Wiktionary 贡献者 | 主词卡、例句、词义与同版审计信息 |
 | [Wiktextract / Kaikki](https://kaikki.org/dictionary/) | 主词库缺少的高频功能词义项 |
 | [ECDICT](https://github.com/skywind3000/ECDICT) | 中文回退、缺词、考试标签与历史词频 |
+| [qwerty-learner](https://github.com/RealKai42/qwerty-learner) | 0.0.2 固定词书的词头、顺序，以及逐书补充译文和原始英美音标；不覆盖主词义 |
+| [DictionaryByGPT4](https://github.com/Ceelog/DictionaryByGPT4) | 0.0.2 独立的 AI 学习文章候选；标记待复核，不作为基础释义 |
 | [CMUdict](https://github.com/cmusphinx/cmudict) · [Open English WordNet](https://github.com/globalwordnet/english-wordnet) | 美式音素与独立概念网络 |
 | [Wikimedia Commons](https://commons.wikimedia.org/) · [eSpeak NG](https://github.com/espeak-ng/espeak-ng) · [Opus](https://opus-codec.org/) | 有署名的真人录音、合成发音与音频编码 |
 
 感谢这些项目、词典编纂者、录音作者和维护者。具体版本、逐层许可、真人录音署名及权利处理方式见 [DATA-LICENSE.md](DATA-LICENSE.md) 和随包 `notice-*` 文件。仓库代码使用 [GPL-3.0](LICENSE)；不同数据和音频保留各自的来源与许可。若发现内容侵权或需要修订，请联系作者并说明具体词条或文件，维护者核查后移除或替换。
 
-**0.0.2：核心版学习词典。** 本版加入考试词书、专业领域和现有助记材料；[设计](docs/DESIGN_0.0.2.md)、[进度](docs/TASKS_0.0.2.md)、[真实词条结构](docs/WORD_ENTRY_MODEL.md)与[客户端接入协议](docs/CLIENT_CONTRACT_0.0.2.md)可直接查看。正式词包有 84,491 词带助记、33,411 词暂无助记，后者在 1.0.0 稳定后与完整版共同补齐。完整版的相同补充与全词音频亦在核心结构稳定后再做。参与修订见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+0.0.2 的 33,411 个核心词仍无助记；补齐工作与完整版学习内容安排在核心结构稳定之后。字段与后续方向见 [0.0.2 设计](docs/DESIGN_0.0.2.md)和[真实词条结构](docs/WORD_ENTRY_MODEL.md)。
