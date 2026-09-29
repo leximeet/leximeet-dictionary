@@ -162,6 +162,34 @@ class LearningTest(unittest.TestCase):
         with sqlite3.connect(self.out) as db:
             self.assertEqual(db.execute("SELECT count(*) FROM mnemonics").fetchone()[0], 1)
 
+    def test_known_bad_gpt_article_is_excluded_without_dropping_short_hook(self):
+        with gzip.open(self.core, "at", encoding="utf-8") as stream:
+            stream.write(json.dumps(_entry("will", "will", hook="原有短助记")) + "\n")
+        with self.gpt.open("a", encoding="utf-8") as stream:
+            stream.write(json.dumps({"word": "will", "content": "没有名词形式"}) + "\n")
+        lock = json.loads(self.lock.read_text())
+        lock["dictionary_by_gpt4"]["sha256"] = hashlib.sha256(self.gpt.read_bytes()).hexdigest()
+        _write_json(self.lock, lock)
+        report = build_learning(self.core, self.out, self.lock, self.dicts, self.gpt)
+        self.assertEqual(report["gpt_editorial_excluded"], 1)
+        aids = learning_for_entry(self.out, "will")["mnemonics"]
+        self.assertEqual(len(aids), 1)
+        self.assertEqual(aids[0]["content"], "原有短助记")
+        audit = json.loads((self.root / "learning.audit.json").read_text())
+        self.assertTrue(any(item["reason"] == "editorial-exclusion"
+                            for item in audit["gpt_skipped"]))
+
+    def test_subject_order_uses_matching_sense_priority_before_global_frequency(self):
+        self.entries[0]["senses"][0]["priority"] = "rare"
+        self.entries[3]["senses"][0]["priority"] = "core"
+        self.entries[3]["senses"][0]["topics"] = [{"code": "biology"}]
+        with gzip.open(self.core, "wt", encoding="utf-8") as stream:
+            for entry in self.entries:
+                stream.write(json.dumps(entry, ensure_ascii=False) + "\n")
+        build_learning(self.core, self.out, self.lock)
+        members = list_members(self.out, "subject:topic:biology")
+        self.assertEqual([row["entry_id"] for row in members], ["algorithm", "photo"])
+
     def test_learning_verifier_rejects_missing_content_and_wrong_sense(self):
         build_learning(self.core, self.out, self.lock, self.dicts, self.gpt)
         self.assertEqual(verify_learning(self.core, self.out)["missing_mnemonics"], 2)

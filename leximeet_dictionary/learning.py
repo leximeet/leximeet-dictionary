@@ -29,6 +29,11 @@ EXAMS = {
     "zk": "中考", "gk": "高考", "cet4": "四级", "cet6": "六级",
     "ky": "考研", "ielts": "雅思", "toefl": "托福", "gre": "GRE",
 }
+# 对抽查中确认有错误的 AI 长文做最小排除，保留同词的主词卡与原有短助记。
+GPT_ARTICLE_EXCLUSIONS = {
+    "law": "变形段落混入无关占位文字",
+    "will": "声称没有名词形式，与核心词卡冲突",
+}
 # 只选来源已经标到义项的领域；这里的组合是词遇的展示分类，不改写源标签。
 SUBJECTS = {
     "computing": ("计算机", ("computing",)),
@@ -150,10 +155,13 @@ def build_learning(core: Path, out: Path, lock_path: Path,
                 if tag["code"] in EXAMS:
                     by_exam[tag["code"]].append(entry)
             for subject, (_, topic_codes) in SUBJECTS.items():
-                sense_ids = [sense["sense_id"] for sense in entry["senses"]
-                             if any(topic["code"] in topic_codes for topic in sense["topics"])]
-                if sense_ids:
-                    by_subject[subject].append((entry, sense_ids))
+                matched = [sense for sense in entry["senses"]
+                           if any(topic["code"] in topic_codes for topic in sense["topics"])]
+                if matched:
+                    # 专业目录优先展示领域本义；全局高频不能让罕见缩写排到第一页。
+                    priority = min({"core": 0, "common": 1, "rare": 2}.get(
+                        sense.get("priority"), 3) for sense in matched)
+                    by_subject[subject].append((entry, [sense["sense_id"] for sense in matched], priority))
 
         for code, title in EXAMS.items():
             catalog_id = f"exam:ecdict:{code}"
@@ -173,12 +181,14 @@ def build_learning(core: Path, out: Path, lock_path: Path,
             catalog_id = f"subject:topic:{subject}"
             db.execute("INSERT INTO catalogs VALUES (?,?,?,?,?)",
                        (catalog_id, f"{title} · 义项领域", "subject", "open-dictionary:v2.0",
-                        "义项 topics：" + ", ".join(topic_codes)))
+                        "义项 topics：" + ", ".join(topic_codes)
+                        + "；先按匹配义项 priority，再按历史词频排序"))
             ordered = sorted(by_subject[subject], key=lambda pair: (
+                pair[2],
                 pair[0]["ecdict"]["frequency_ranks"].get("frq")
                 or pair[0]["ecdict"]["frequency_ranks"].get("bnc") or 10**12,
                 pair[0]["lookup_key"], pair[0]["entry_id"]))
-            for pos, (entry, sense_ids) in enumerate(ordered, 1):
+            for pos, (entry, sense_ids, _) in enumerate(ordered, 1):
                 db.execute("INSERT INTO members VALUES (?,?,?,?,?,?)",
                            (catalog_id, entry["entry_id"], pos, canonical(sense_ids), "sense-topic", "{}"))
             counters["subject_members"] += len(ordered)
@@ -245,6 +255,14 @@ def build_learning(core: Path, out: Path, lock_path: Path,
                     record = json.loads(line)
                     word, content = record.get("word"), record.get("content")
                     if isinstance(word, str) and isinstance(content, str) and content.strip():
+                        reason = GPT_ARTICLE_EXCLUSIONS.get(lookup_key(word))
+                        if reason:
+                            counters["gpt_editorial_excluded"] += 1
+                            audit["gpt_skipped"].append({
+                                "position": source_pos, "word": word,
+                                "reason": "editorial-exclusion", "detail": reason,
+                            })
+                            continue
                         candidates[lookup_key(word)].append((word, content))
                     else:
                         counters["gpt_invalid"] += 1
