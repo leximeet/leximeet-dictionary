@@ -387,4 +387,4 @@ python3 -m leximeet_dictionary learning-export --core dist/v0.0.1/core.entries.j
 | `learning.source_signals[]` | 词书自有的评级/标记；不擅自解释为词频 | 已预留 |
 | `learning.audio.alternate_candidates[]` | 其他有来源的发音候选 | 已预留 |
 
-现有 `senses[]` 已覆盖逐义词性、中英释义、普通例句和用法标签；`pronunciations[]` 已覆盖音标；`forms[]` 已覆盖词形。0.0.3 可逐项填充上述空位，AI 生成练习标为模拟题，来源明确的题目或例句另存来源信息。核心词结构稳定后再扩展完整版。
+现有 `senses[]` 已覆盖逐义词性、中英释义、普通例句和用法标签；`pronunciations[]` 已覆盖音标；`forms[]` 已覆盖词形。上述学习字段的逐项填充顺延至 0.0.4：AI 生成练习标为模拟题，来源明确的题目或例句另存来源信息。版本安排见[开发路线](ROADMAP.md)。
