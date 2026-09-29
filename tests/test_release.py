@@ -76,7 +76,8 @@ class ReleaseTests(unittest.TestCase):
             build_release(source, cache, base, shard_bytes=1024)
             core = base / "core.entries.jsonl.gz"
             lock = root / "learning-sources.lock.json"
-            lock.write_text(json.dumps({"schema_version": "leximeet.learning-sources.v1"}),
+            lock.write_text(json.dumps({"schema_version": "leximeet.learning-sources.v1",
+                                        "base_release_manifest_sha256": file_hash(base / "release.json")[1]}),
                             encoding="utf-8")
             learning_db = root / "learning.sqlite"
             report = build_learning(core, learning_db, lock)
@@ -91,6 +92,10 @@ class ReleaseTests(unittest.TestCase):
             self.assertEqual(verify_core_release(output, deep=True)["audio_covered_entry_count"], 2)
             shard = next(name for name in manifest["assets"] if name.endswith(".pack"))
             self.assertEqual(file_hash(output / shard), file_hash(base / shard))
+            with (base / "release.json").open("a", encoding="utf-8") as stream:
+                stream.write("\n")
+            with self.assertRaisesRegex(ValueError, "基础 Release 与固定来源锁不一致"):
+                build_core_release(base, learning_db, lock, root / "wrong-base")
             with (output / shard).open("ab") as stream:
                 stream.write(b"damage")
             with self.assertRaisesRegex(ValueError, "资产损坏"):

@@ -5,7 +5,7 @@
 | 完成 | 任务 | 做完后怎样检查 |
 | --- | --- | --- |
 | [x] | 核对现有字段和缺口 | 核心版 117,902 词；84,212 词已有短助记，GPT 候选实测后仍有 33,411 词无学习材料；数据写入设计文档。 |
-| [x] | 固定首批参考输入 | `learning-sources.lock.json` 有 qwerty 10 份词表、DictionaryByGPT4 JSONL 的 SHA-256；导入时哈希不符即停。 |
+| [x] | 固定首批参考输入 | `learning-sources.lock.json` 固定官方 0.0.1 Release 清单、qwerty 10 份词表和 DictionaryByGPT4 JSONL 的 SHA-256；哈希不符即停。 |
 | [x] | 建立核心学习索引候选 | `learning-build` 生成独立 SQLite，不改 0.0.1 词条；本地报告列出 23 个目录、32,236 条 qwerty 词表成员；audit 文件逐条列出跳过原因。 |
 | [x] | 区分考试词书、考试标签、专业义项 | 查询结果保留 `catalog_id/category/source/method/sense_ids/position`；单元测试检查顺序、义项作用域及歧义。 |
 | [x] | 接入现有短助记与 GPT 候选 | 分来源、类型、格式、复核状态存储，长文不覆盖词义；单元测试和本地查询可见。 |
@@ -19,24 +19,21 @@
 | [x] | 修正专业目录学习顺序 | 先按匹配义项 `priority`，再按历史词频排序；本地医学目录首页不再从罕见缩写 `be/it/do` 开始。 |
 | [x] | 抽查 GPT 候选并约定展示方式 | [抽查记录](qa/0.0.2/REVIEW.md)列出 2 篇已排除文章；其余材料保留 `ai-unreviewed`，接入协议要求折叠展示，发布包附来源声明。逐篇事实核验属于后续内容维护。 |
 | [x] | 抽查目录质量 | 专业目录首页顺序已修正；深检保证成员和义项引用有效，509 条 qwerty 未匹配记录只在 audit 中，不进入词书。词书归属不会自动改写义项 topic。 |
-| [x] | 试产真实 0.0.2 核心词包 | 本地 `core-release-build` 与 `core-release-verify --deep` 已通过；17 个资产，117,902 条核心词全部有音频、84,491 条有助记。 |
+| [x] | 用官方 0.0.1 资产复现 0.0.2 核心词包 | 正式 v0.0.1 的 13 个核心资产先通过深检，再产出 17 个 0.0.2 资产并通过深检：117,902 词全部有音频，84,491 词有助记。 |
 | [ ] | 远端运行 0.0.2 GitHub Actions | 源码与来源固定后，固定 tag 并手动运行；以远端日志及草稿资产哈希为准，不以本地夹具测试代替。 |
 | [ ] | 发布前收尾 | 远端草稿的文件名与哈希校验完成后，对齐 README、CHANGELOG 和 Release 说明，再发布；0.0.2 不验收客户端实现或练习题。 |
 
-当前试产命令（将 `/path/to` 换为各自本地参考仓库路径）：
+本地复现命令。`BASE` 必须是从[官方 v0.0.1 Release](https://github.com/leximeet/leximeet-dictionary/releases/tag/v0.0.1)下载的核心资产目录，下载步骤见[流水线](../.github/workflows/core-v0.0.2.yml)。本机旧 `dist/v0.0.1` 的音频与正式 Release 不同，不能作为 0.0.2 的固定输入。将 `/path/to` 换为自己的实际路径：
 
 ```bash
+BASE=/path/to/official-v0.0.1-core
 python3 -m leximeet_dictionary learning-build \
-  --core dist/v0.0.1/core.entries.jsonl.gz \
+  --core "$BASE/core.entries.jsonl.gz" \
   --qwerty-dicts /path/to/qwerty-learner/public/dicts \
   --gpt-file /path/to/DictionaryByGPT4/gptwords.json \
-  --out build/learning-v0.0.2-v2.sqlite
-python3 -m leximeet_dictionary learning-catalogs --db build/learning-v0.0.2-v2.sqlite
-python3 -m leximeet_dictionary learning-members --db build/learning-v0.0.2-v2.sqlite subject:topic:biology --limit 20
-python3 -m leximeet_dictionary learning-missing --core dist/v0.0.1/core.entries.jsonl.gz --db build/learning-v0.0.2-v2.sqlite --out build/learning-v0.0.2-missing.jsonl
-python3 -m leximeet_dictionary learning-export --core dist/v0.0.1/core.entries.jsonl.gz --db build/learning-v0.0.2-v2.sqlite --out build/core.entries.v2.jsonl.gz
-python3 -m leximeet_dictionary learning-verify --core dist/v0.0.1/core.entries.jsonl.gz --db build/learning-v0.0.2-v2.sqlite
-python3 -m leximeet_dictionary core-release-build --base dist/v0.0.1 --db build/learning-v0.0.2-v2.sqlite --out build/v0.0.2-candidate
+  --out build/learning-v0.0.2.sqlite
+python3 -m leximeet_dictionary learning-verify --core "$BASE/core.entries.jsonl.gz" --db build/learning-v0.0.2.sqlite
+python3 -m leximeet_dictionary core-release-build --base "$BASE" --db build/learning-v0.0.2.sqlite --out build/v0.0.2-candidate
 python3 -m leximeet_dictionary core-release-verify build/v0.0.2-candidate --deep
 python3 -m unittest discover -s tests -v
 ```

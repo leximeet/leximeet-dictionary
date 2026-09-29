@@ -31,6 +31,10 @@ def _copy(source: Path, out: Path, name: str, assets: dict) -> None:
 
 def build_core_release(base: Path, db_path: Path, source_lock: Path, out: Path) -> dict:
     """从已发布的 0.0.1 核心资产升级；助记覆盖数如实写入清单。"""
+    base_manifest_sha256 = file_hash(base / "release.json")[1]
+    lock = json.loads(source_lock.read_text(encoding="utf-8"))
+    if lock.get("base_release_manifest_sha256") != base_manifest_sha256:
+        raise ValueError("0.0.1 基础 Release 与固定来源锁不一致")
     base_manifest = json.loads((base / "release.json").read_text(encoding="utf-8"))
     core_file = _asset_path(base, base_manifest["editions"]["core"]["entries"])
     quality = verify_learning(core_file, db_path)
@@ -70,7 +74,7 @@ def build_core_release(base: Path, db_path: Path, source_lock: Path, out: Path) 
         "schema_version": SCHEMA, "dictionary_version": VERSION,
         "entry_schema": ENTRY_SCHEMA, "learning_schema": LEARNING_SCHEMA,
         "base_release": {"version": "0.0.1",
-                         "manifest_sha256": file_hash(base / "release.json")[1],
+                         "manifest_sha256": base_manifest_sha256,
                          "core_entries_sha256": file_hash(core_file)[1]},
         "assets": assets,
         "editions": {"core": {
@@ -118,6 +122,9 @@ def verify_core_release(root: Path, deep: bool = False) -> dict:
     if (not required.issubset(names) or not any(name.startswith("audio-core-")
                                                 and name.endswith(".pack") for name in names)):
         raise ValueError("0.0.2 Release 缺少必要资产")
+    source_lock = json.loads(_asset_path(root, "learning-sources.lock.json").read_text(encoding="utf-8"))
+    if source_lock.get("base_release_manifest_sha256") != manifest["base_release"]["manifest_sha256"]:
+        raise ValueError("0.0.2 与固定的基础 Release 不一致")
     if (edition["entry_count"] < 1
             or not 0 <= edition["mnemonic_covered_entry_count"] <= edition["entry_count"]
             or edition["entry_count"] != edition["audio_covered_entry_count"]):

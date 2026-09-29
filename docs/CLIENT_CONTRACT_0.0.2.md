@@ -9,7 +9,7 @@
 | `core.audio-index.jsonl.gz`、`audio-core-*.pack` | 逐词离线音频；与 0.0.1 同名、同 SHA-256 的分片可复用。 |
 | `learning-sources.lock.json`、`DATA-LICENSE.md`、`notice-*` | 固定来源与署名。 |
 
-`release.json` 使用 `leximeet.release.v2`，`editions` 仅有 `core`；`entry_schema=leximeet.entry.v2`、`learning_schema=leximeet.learning.v2`。客户端先校验全部资产，再确认 `audio_covered_entry_count == entry_count`、`mnemonic_covered_entry_count <= entry_count`。后者是实际助记覆盖数，不能假定逐词都有助记。`core-release-verify --deep` 是参考校验器；安装失败时继续使用旧词包，用户笔记、学习进度和自定义标签仍留在词包之外。
+`release.json` 使用 `leximeet.release.v2`，`editions` 仅有 `core`；`entry_schema=leximeet.entry.v2`、`learning_schema=leximeet.learning.v2`。客户端先校验全部资产，再确认 `audio_covered_entry_count == entry_count`、`mnemonic_covered_entry_count <= entry_count`，以及 `base_release.manifest_sha256` 与来源锁一致。助记覆盖数不能假定等于词条数。`core-release-verify --deep` 是参考校验器；安装失败时继续使用旧词包，用户笔记、学习进度和自定义标签仍留在词包之外。
 
 两种学习入口共用 `core.learning.sqlite` 的 `catalogs` 和 `members`：`category=exam` 展示考试词书与标签集合，`category=subject` 展示专业词书和义项领域集合。按 `catalog_id`、`position` 分页；`sense_ids` 非空时只突出这些义项，空数组表示词条级归属。`source_payload` 中的逐书译文和原始音标只作补充，主释义仍以 `senses[]` 为准。一个词的完整结构见[中文词条讲解](WORD_ENTRY_MODEL.md)和[真实 JSON](examples/photosynthesis.v2.json)。
 

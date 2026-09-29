@@ -110,7 +110,8 @@ def parser() -> argparse.ArgumentParser:
     learning_verify.add_argument("--core", type=Path, required=True)
     learning_verify.add_argument("--db", type=Path, required=True)
     core_release_build = commands.add_parser("core-release-build", help="构建 0.0.2 独立核心词包")
-    core_release_build.add_argument("--base", type=Path, required=True, help="已校验的 0.0.1 Release 目录")
+    core_release_build.add_argument("--base", type=Path, required=True,
+                                    help="官方 v0.0.1 核心 Release 目录（按来源锁核验）")
     core_release_build.add_argument("--db", type=Path, required=True)
     core_release_build.add_argument("--lock", type=Path, default=Path("learning-sources.lock.json"))
     core_release_build.add_argument("--out", type=Path, required=True)

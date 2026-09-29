@@ -1,4 +1,5 @@
 {
+  "base_release_manifest_sha256": "dc8b6d2ddba34bcb65c99fa45d5af1994a2bd31b198dd2f8700817ff081e8c64",
   "dictionary_by_gpt4": {
     "bytes": 17077970,
     "sha256": "51bc73affec742690d9683f282f8944e7a191e94592ca9c7c2a317e5f92fb5d0"

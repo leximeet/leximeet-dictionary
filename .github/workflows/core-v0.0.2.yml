@@ -64,7 +64,7 @@ jobs:
           mkdir -p build/base-release
           gh release download v0.0.1 --repo "$GITHUB_REPOSITORY" \
             --dir build/base-release --pattern release.json
-          mapfile -t core_assets < <(python - <<'PY'
+          core_asset_list=$(python - <<'PY'
           import json
           from pathlib import Path
           manifest = json.loads(Path('build/base-release/release.json').read_text())
@@ -73,8 +73,9 @@ jobs:
           print('\n'.join(manifest['editions']['core']['assets']))
           PY
           )
+          test -n "$core_asset_list"
           patterns=()
-          for asset in "${core_assets[@]}"; do patterns+=(--pattern "$asset"); done
+          while IFS= read -r asset; do patterns+=(--pattern "$asset"); done <<< "$core_asset_list"
           gh release download v0.0.1 --repo "$GITHUB_REPOSITORY" \
             --dir build/base-release "${patterns[@]}"
           python -m leximeet_dictionary release-verify build/base-release --edition core --deep
@@ -111,12 +112,21 @@ jobs:
           gh release view v0.0.2 --repo "$GITHUB_REPOSITORY" \
             --json isDraft,assets > build/remote-release.json
           python - <<'PY'
+          import hashlib
           import json
           from pathlib import Path
           remote = json.loads(Path('build/remote-release.json').read_text())
-          expected = {p.name for p in Path('dist/v0.0.2').iterdir() if p.is_file()}
-          actual = {a['name'] for a in remote['assets']}
-          assert remote['isDraft'] and actual == expected, (remote['isDraft'], expected - actual, actual - expected)
+          root = Path('dist/v0.0.2')
+          manifest = json.loads((root / 'release.json').read_text())
+          local = dict(manifest['assets'])
+          release = root / 'release.json'
+          local['release.json'] = {
+              'bytes': release.stat().st_size,
+              'sha256': hashlib.sha256(release.read_bytes()).hexdigest(),
+          }
+          actual = {item['name']: item for item in remote['assets']}
+          assert remote['isDraft'] and set(actual) == set(local)
+          for name, meta in local.items():
+              item = actual[name]
+              assert item['size'] == meta['bytes'] and item['digest'] == 'sha256:' + meta['sha256'], name
           PY
-          gh release download v0.0.2 --repo "$GITHUB_REPOSITORY" --dir build/remote-check
-          python -m leximeet_dictionary core-release-verify build/remote-check
