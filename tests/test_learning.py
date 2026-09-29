@@ -1,0 +1,135 @@
+"""0.0.2 核心学习索引的最小真实语义测试。"""
+
+import gzip
+import hashlib
+import json
+import sqlite3
+import tempfile
+import unittest
+from pathlib import Path
+
+from leximeet_dictionary.learning import (
+    BOOKS, build_learning, export_missing, learning_for_entry, list_catalogs, list_members,
+)
+
+
+def _write_json(path: Path, value) -> dict:
+    path.write_text(json.dumps(value, ensure_ascii=False), encoding="utf-8")
+    return {"sha256": hashlib.sha256(path.read_bytes()).hexdigest(), "bytes": path.stat().st_size}
+
+
+def _entry(word, entry_id, tags=(), topics=(), hook=None):
+    return {
+        "schema_version": "leximeet.entry.v1", "entry_id": entry_id, "headword": word,
+        "lookup_key": word.casefold(), "memory_hook_zh": hook,
+        "origin": "curated" if hook else "ecdict-fallback",
+        "ecdict": {
+            "exam_tags": [{"code": tag} for tag in tags],
+            "frequency_ranks": {"frq": 100} if word == "Photosynthesis" else {},
+        },
+        "senses": [{
+            "sense_id": "sense-" + entry_id, "pos": "noun",
+            "topics": [{"code": topic} for topic in topics],
+        }],
+    }
+
+
+class LearningTest(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        self.core = self.root / "core.jsonl.gz"
+        self.entries = [
+            _entry("Photosynthesis", "photo", ("toefl",), ("biology", "biochemistry"), "阳光工厂"),
+            _entry("May", "month"),
+            _entry("may", "modal"),
+            _entry("algorithm", "algorithm", ("cet4",), ("computing",)),
+        ]
+        with gzip.open(self.core, "wt", encoding="utf-8") as stream:
+            for entry in self.entries:
+                stream.write(json.dumps(entry, ensure_ascii=False) + "\n")
+        self.dicts = self.root / "dicts"
+        self.dicts.mkdir()
+        qwerty = {}
+        for book_id, _, _ in BOOKS:
+            words = [{"name": "photosynthesis"}, {"name": "Photosynthesis"},
+                     {"name": "May"}, {"name": "MAY"}, {"name": "absent"}] if book_id == "CET4_T" else []
+            qwerty[book_id] = _write_json(self.dicts / (book_id + ".json"), words)
+        self.gpt = self.root / "gptwords.json"
+        self.gpt.write_text("\n".join(json.dumps(row) for row in [
+            {"word": "Photosynthesis", "content": "AI 学习材料"},
+            {"word": "algorithm", "content": "算法助记"},
+            {"word": "MAY", "content": "有歧义"},
+        ]) + "\n", encoding="utf-8")
+        self.lock = self.root / "lock.json"
+        _write_json(self.lock, {
+            "schema_version": "leximeet.learning-sources.v1",
+            "qwerty": qwerty,
+            "qwerty_commit": "fixture",
+            "dictionary_by_gpt4_commit": "fixture",
+            "dictionary_by_gpt4": {
+                "sha256": hashlib.sha256(self.gpt.read_bytes()).hexdigest()
+            },
+        })
+        self.out = self.root / "learning.sqlite"
+
+    def test_catalog_scope_order_and_mnemonic_provenance(self):
+        report = build_learning(self.core, self.out, self.lock, self.dicts, self.gpt)
+        self.assertEqual(report["core_entries"], 4)
+        self.assertEqual(report["qwerty_duplicate"], 1)
+        self.assertEqual(report["qwerty_unmatched"], 1)
+        self.assertEqual(report["gpt_matched_entries"], 2)
+        self.assertEqual(report["gpt_ambiguous"], 1)
+        self.assertEqual(report["entries_without_learning_material"], 2)
+        catalogs = {row["catalog_id"]: row for row in list_catalogs(self.out)}
+        self.assertEqual(len(catalogs), len(BOOKS) + 8 + 5)
+        self.assertEqual(catalogs["book:qwerty:CET4_T"]["rights_status"],
+                         "candidate-upstream-rights-unverified")
+        members = list_members(self.out, "book:qwerty:CET4_T")
+        self.assertEqual([row["entry_id"] for row in members], ["photo", "month"])
+        self.assertEqual(members[0]["position"], 1)
+        subject = list_members(self.out, "subject:topic:biology")
+        self.assertEqual(subject[0]["sense_ids"], ["sense-photo"])
+        self.assertEqual(list_members(self.out, "exam:ecdict:toefl")[0]["sense_ids"], [])
+        photo = learning_for_entry(self.out, "photo")
+        self.assertEqual(len(photo["mnemonics"]), 2)
+        self.assertEqual({m["review_status"] for m in photo["mnemonics"]},
+                         {"source-published", "ai-unreviewed"})
+        self.assertTrue(all(isinstance(m["provenance"], dict) for m in photo["mnemonics"]))
+        missing = self.root / "missing.jsonl"
+        exported = export_missing(self.core, self.out, missing)
+        self.assertEqual(exported["missing_entries"], 2)
+        rows = [json.loads(line) for line in missing.read_text().splitlines()]
+        self.assertEqual({row["entry_id"] for row in rows}, {"month", "modal"})
+        self.assertTrue(all(row["entry_sha256"] for row in rows))
+        self.assertTrue((self.root / "learning.report.json").exists())
+        audit = json.loads((self.root / "learning.audit.json").read_text())
+        self.assertEqual(len(audit["qwerty_skipped"]), 3)
+        self.assertEqual(audit["gpt_skipped"][0]["reason"], "ambiguous")
+        with self.assertRaises(FileExistsError):
+            build_learning(self.core, self.out, self.lock)
+
+    def test_duplicate_core_entry_is_rejected(self):
+        with gzip.open(self.core, "at", encoding="utf-8") as stream:
+            stream.write(json.dumps(self.entries[0]) + "\n")
+        with self.assertRaisesRegex(ValueError, "重复词头"):
+            build_learning(self.core, self.out, self.lock)
+        self.assertFalse(self.out.exists())
+
+    def test_input_hash_mismatch_fails_before_output(self):
+        (self.dicts / "CET4_T.json").write_text("[] ", encoding="utf-8")
+        with self.assertRaises(ValueError):
+            build_learning(self.core, self.out, self.lock, self.dicts, self.gpt)
+        self.assertFalse(self.out.exists())
+
+    def test_core_only_catalogues_without_candidates(self):
+        report = build_learning(self.core, self.out, self.lock)
+        self.assertEqual(report["catalogs"], 13)
+        self.assertEqual(report["entries_without_learning_material"], 3)
+        with sqlite3.connect(self.out) as db:
+            self.assertEqual(db.execute("SELECT count(*) FROM mnemonics").fetchone()[0], 1)
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -78,6 +78,26 @@ def parser() -> argparse.ArgumentParser:
     assemble = commands.add_parser("release-assemble", help="校验分片并重组完整版 SQLite")
     assemble.add_argument("directory", type=Path)
     assemble.add_argument("--out", type=Path, required=True)
+    learning_build = commands.add_parser("learning-build", help="生成 0.0.2 核心版学习索引候选")
+    learning_build.add_argument("--core", type=Path, required=True)
+    learning_build.add_argument("--out", type=Path, required=True)
+    learning_build.add_argument("--lock", type=Path, default=Path("learning-sources.lock.json"))
+    learning_build.add_argument("--qwerty-dicts", type=Path, help="本地 qwerty-learner 的 public/dicts")
+    learning_build.add_argument("--gpt-file", type=Path, help="本地 DictionaryByGPT4 的 gptwords.json")
+    learning_catalogs = commands.add_parser("learning-catalogs", help="查看考试与专业词书目录")
+    learning_catalogs.add_argument("--db", type=Path, required=True)
+    learning_members = commands.add_parser("learning-members", help="按词书顺序分页读取词条 ID")
+    learning_members.add_argument("--db", type=Path, required=True)
+    learning_members.add_argument("catalog_id")
+    learning_members.add_argument("--limit", type=int, default=50)
+    learning_members.add_argument("--offset", type=int, default=0)
+    learning_entry = commands.add_parser("learning-entry", help="查询词条的词书归属与助记内容")
+    learning_entry.add_argument("--db", type=Path, required=True)
+    learning_entry.add_argument("entry_id")
+    learning_missing = commands.add_parser("learning-missing", help="导出后续 AI 待补助记的核心词及真实释义")
+    learning_missing.add_argument("--core", type=Path, required=True)
+    learning_missing.add_argument("--db", type=Path, required=True)
+    learning_missing.add_argument("--out", type=Path, required=True)
     return root
 
 
@@ -93,6 +113,21 @@ def main() -> None:
             "wiktextract-function-words": args.function_words,
         }
         result = build(inputs, args.lock, args.out, editorial_path=args.editorial)
+    elif args.command == "learning-build":
+        from .learning import build_learning
+        result = build_learning(args.core, args.out, args.lock, args.qwerty_dicts, args.gpt_file)
+    elif args.command == "learning-catalogs":
+        from .learning import list_catalogs
+        result = list_catalogs(args.db)
+    elif args.command == "learning-members":
+        from .learning import list_members
+        result = list_members(args.db, args.catalog_id, args.limit, args.offset)
+    elif args.command == "learning-entry":
+        from .learning import learning_for_entry
+        result = learning_for_entry(args.db, args.entry_id)
+    elif args.command == "learning-missing":
+        from .learning import export_missing
+        result = export_missing(args.core, args.db, args.out)
     elif args.command == "lookup":
         result = {"entries": lookup(args.db, args.word)}
         if args.wordnet:

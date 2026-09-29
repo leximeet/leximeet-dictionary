@@ -10,7 +10,7 @@
 | CMUdict | 美式 ARPABET 音素 | 87,412 词条含该记法 |
 | Open English WordNet | 可独立查询的概念网络 | 107,519 synset |
 | Wikimedia Commons | 逐文件署名的核心词真人离线录音 | 436 条 OGG |
-| eSpeak NG + Opus | 其余核心词的本地合成离线录音 | 117,466 条核心词；非核心词音频留给 0.0.2 |
+| eSpeak NG + Opus | 其余核心词的本地合成离线录音 | 117,466 条核心词；非核心词音频等核心结构稳定后规划 |
 | 词遇审校层 | 对抽样发现的歧义提供有证据的中文显示，保留原字段 | 8 词头、6 处原字段修订 |
 
 最终合并结果为 **811,092 词条、241,588 义项**，其中 768,739 词条有 ECDICT 词条级中文回退；14,942 词条有 ECDICT 显式考试标签。qwerty-learner 和 DictionaryByGPT4 当前没有内容进入词包。
@@ -35,4 +35,4 @@
 | 核心版 `core` | 117,902 条完整词卡与 117,902 条离线音频；正式 Release 资产合计 357,719,296 字节（约 341 MiB），供端侧内置 |
 | 完整版 `full` | 811,092 条完整词卡，共享核心词的 117,902 条离线音频；SQLite 切为 5 片；正式 Release 资产合计 1,743,717,043 字节（约 1,663 MiB），供用户主动下载 |
 
-以上体积为各版 `assets` 的总和，完整版已包含共享的核心资产，升级时无需重复下载。准确 SHA-256 与分片清单以 [v0.0.1 Release](https://github.com/leximeet/leximeet-dictionary/releases/tag/v0.0.1) 的 `release.json` 为准；单个资产不超过 256 MiB。非核心词若要全部随包发音，属于 [0.0.2 计划](TASKS.md)。
+以上体积为各版 `assets` 的总和，完整版已包含共享的核心资产，升级时无需重复下载。准确 SHA-256 与分片清单以 [v0.0.1 Release](https://github.com/leximeet/leximeet-dictionary/releases/tag/v0.0.1) 的 `release.json` 为准；单个资产不超过 256 MiB。非核心词若要全部随包发音，等核心结构在 1.0.0 稳定后再规划；0.0.2 当前聚焦[核心版学习目录与助记](TASKS_0.0.2.md)。
