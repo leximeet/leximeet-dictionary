@@ -1,0 +1,97 @@
+name: Release 0.0.3 layered dictionary
+
+on:
+  push:
+    tags: ['v0.0.3']
+  workflow_dispatch:
+
+# main/PR 只跑轻量测试；固定 tag 才生成、核验并自动发布五种组合。
+permissions:
+  contents: write
+
+concurrency:
+  group: dictionary-v0.0.3-release
+  cancel-in-progress: false
+
+jobs:
+  packages:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refs/tags/v0.0.3
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: 固定压缩实现并运行轻量测试
+        run: |
+          python -m pip install -r requirements.txt
+          python -m compileall -q leximeet_dictionary scripts
+          python -m unittest discover -s tests -v
+      - name: 下载并锁定官方基础词卡及核心录音
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p build/base-core build/base-full
+          gh release download v0.0.2 --repo leximeet/leximeet-dictionary \
+            --dir build/base-core --pattern release.json
+          gh release download v0.0.1 --repo leximeet/leximeet-dictionary \
+            --dir build/base-full --pattern release.json
+          python - <<'PY'
+          import hashlib, json, subprocess
+          from pathlib import Path
+          lock = json.loads(Path('package-sources.lock.json').read_text())
+          for path, key in [('build/base-core', 'core'), ('build/base-full', 'full')]:
+              raw = (Path(path) / 'release.json').read_bytes()
+              assert hashlib.sha256(raw).hexdigest() == lock[key]['manifest_sha256'], path
+          core = json.loads(Path('build/base-core/release.json').read_text())
+          full = json.loads(Path('build/base-full/release.json').read_text())
+          for version, directory, names in [
+              ('v0.0.2', 'build/base-core', core['editions']['core']['assets']),
+              ('v0.0.1', 'build/base-full', [lock['full']['entries_asset']]),
+          ]:
+              command = ['gh', 'release', 'download', version, '--repo',
+                         'leximeet/leximeet-dictionary', '--dir', directory]
+              for name in names:
+                  command += ['--pattern', name]
+              subprocess.run(command, check=True)
+          name = lock['full']['entries_asset']
+          assert full['assets'][name]['sha256'] == lock['full']['sha256']
+          assert full['editions']['full']['entry_count'] == lock['full']['entry_count']
+          PY
+      - name: 构建并深检五种词包
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m leximeet_dictionary package-build \
+            --base build/base-core --full build/base-full/full.entries.jsonl.gz \
+            --out dist/v0.0.3 > build/packages.json
+          python -m leximeet_dictionary package-verify dist/v0.0.3 \
+            --deep > build/package-verification.json
+          # 对真实 lite 有声包建立查询索引；其余组合安装/升级由小样本集成测试覆盖。
+          python -m leximeet_dictionary package-install dist/v0.0.3 \
+            --edition lite-audio --source dist/v0.0.3 \
+            --cache build/install-cache --out build/installed > build/lite-install.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from leximeet_dictionary.builder import lookup
+          from leximeet_dictionary.learning import list_catalogs
+          result = json.loads(Path('build/lite-install.json').read_text())
+          db = Path(result['package_path']) / 'dictionary.sqlite'
+          assert lookup(db, 'the') and lookup(db, 'photosynthesis')
+          assert len(list_catalogs(db)) == 23
+          print({name: (item['entry_count'], item['download_bytes'])
+                 for name, item in json.loads(Path('dist/v0.0.3/release.json').read_text())['editions'].items()})
+          PY
+          df -h .
+      - name: 补齐草稿、核验 GitHub 摘要并自动发布
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python -m scripts.publish_v3 --root dist/v0.0.3 \
+            --repo "$GITHUB_REPOSITORY" --notes docs/RELEASE_NOTES_0.0.3.md

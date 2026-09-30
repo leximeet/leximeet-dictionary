@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/leximeet/leximeet-dictionary/schemas/leximeet.entry.v2.schema.json",
-  "title": "LexiMeet 核心版词条 v2",
+  "title": "LexiMeet 词条 v2",
   "type": "object",
   "required": [
     "schema_version",
@@ -64,6 +64,10 @@
               "position": {
                 "type": "integer",
                 "minimum": 1
+              },
+              "match_method": {
+                "type": "string",
+                "description": "0.0.3 起导出匹配方法；用于还原词书成员索引，旧版词卡可缺省。"
               },
               "sense_ids": {
                 "type": "array",

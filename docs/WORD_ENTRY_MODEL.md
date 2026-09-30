@@ -373,6 +373,8 @@ python3 -m leximeet_dictionary learning-export --core dist/v0.0.1/core.entries.j
 
 `learning.collections[]` 对应“一个词在哪本书、排第几、匹配哪个义项”。例如样本中的 GMAT/GRE/SAT/TOEFL 词书分别保存 `source_payload.glosses_zh` 和 `source_payload.pronunciations[].raw_text`；它们是词书提供的补充文本，**没有覆盖**主词卡 `senses[]` 或标准 IPA。`source_record_id=null` 是为未来有源记录 ID 的词书保留的位置。考试标签集合的 `sense_ids=[]` 表示词条级；专业目录则保存命中的具体义项 ID。
 
+0.0.3 沿用本页词卡结构，并在每个目录成员上补充可选 `match_method`，保留词头匹配方式。新版把词卡按层压缩，安装时由这些字段还原目录、成员和助记索引；JSON 示例仍以 0.0.2 为基准，传输格式和音频范围见[0.0.3 接入](PACKAGES_0.0.3.md)。
+
 `learning.mnemonics[]` 保留来源、格式、内容和复核状态。`learning.audio.offline_index_entry_id` 指向现有独立离线音频索引。其余字段现为可扩展的空数组：
 
 | v2 字段 | 承载的能力 | 当前状态 |

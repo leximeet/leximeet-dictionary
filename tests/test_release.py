@@ -8,6 +8,7 @@ import sqlite3
 import subprocess
 import tempfile
 import unittest
+from contextlib import closing
 from pathlib import Path
 
 from leximeet_dictionary.builder import file_hash
@@ -37,7 +38,7 @@ def fixture(root: Path) -> tuple[Path, Path]:
         payload["ecdict"]["frequency_ranks"] = {"frq": rank} if rank else {}
         rows.append((entry_id, headword, headword, origin, rank,
                      json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))))
-    with sqlite3.connect(source / "dictionary.sqlite") as db:
+    with closing(sqlite3.connect(source / "dictionary.sqlite")) as db, db:
         db.execute("CREATE TABLE entries(entry_id TEXT PRIMARY KEY,headword TEXT,lookup_key TEXT,"
                    "origin TEXT,rank INTEGER,payload TEXT)")
         db.executemany("INSERT INTO entries VALUES (?,?,?,?,?,?)", rows)
@@ -50,7 +51,7 @@ def fixture(root: Path) -> tuple[Path, Path]:
         "dictionary_version": "0.0.1", "entry_schema": "leximeet.entry.v1",
         "counts": {"total_entries": 3}, "inputs": {}, "outputs": outputs}), encoding="utf-8")
     (cache / "files").mkdir()
-    with sqlite3.connect(cache / "clips.sqlite") as db:
+    with closing(sqlite3.connect(cache / "clips.sqlite")) as db, db:
         db.execute("CREATE TABLE metadata(key TEXT PRIMARY KEY,value TEXT NOT NULL)")
         db.execute("CREATE TABLE clips(entry_id TEXT PRIMARY KEY,headword TEXT,path TEXT,"
                    "bytes INTEGER,sha256 TEXT,kind TEXT,style TEXT,source_ref TEXT)")

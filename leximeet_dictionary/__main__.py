@@ -118,6 +118,35 @@ def parser() -> argparse.ArgumentParser:
     core_release_verify = commands.add_parser("core-release-verify", help="核验 0.0.2 核心词包")
     core_release_verify.add_argument("directory", type=Path)
     core_release_verify.add_argument("--deep", action="store_true")
+    package_build = commands.add_parser("package-build", help="构建 0.0.3 的五种分层词包")
+    package_build.add_argument("--base", type=Path, required=True, help="官方 0.0.2 核心资产目录")
+    package_build.add_argument("--full", type=Path, required=True, help="官方 0.0.1 full.entries.jsonl.gz")
+    package_build.add_argument("--lock", type=Path, default=Path("package-sources.lock.json"))
+    package_build.add_argument("--function-words", type=Path, default=Path("sources/function-words.jsonl"))
+    package_build.add_argument("--lite-mb", type=int, default=100, help="十进制 MB，最多 100")
+    package_build.add_argument("--shard-mib", type=int, default=256)
+    package_build.add_argument("--out", type=Path, required=True)
+    package_verify = commands.add_parser("package-verify", help="校验全部或单个 0.0.3 组合")
+    package_verify.add_argument("directory", type=Path)
+    package_verify.add_argument("--edition", choices=("lite-text", "lite-audio", "core-text",
+                                                     "core-audio", "full-text"))
+    package_verify.add_argument("--deep", action="store_true")
+    package_plan = commands.add_parser("package-plan", help="规划只下载缺少或损坏的资产")
+    package_plan.add_argument("directory", type=Path, help="包含 release.json 的目录")
+    package_plan.add_argument("--edition", required=True)
+    package_plan.add_argument("--cache", type=Path, required=True)
+    package_install = commands.add_parser("package-install", help="增量下载、生成索引并原子安装")
+    package_install.add_argument("directory", type=Path, help="包含 release.json 的目录")
+    package_install.add_argument("--edition", required=True)
+    package_install.add_argument("--cache", type=Path, required=True)
+    package_install.add_argument("--out", type=Path, required=True, help="独立的词包安装目录")
+    location = package_install.add_mutually_exclusive_group(required=True)
+    location.add_argument("--source", type=Path, help="本地资产目录")
+    location.add_argument("--url", help="固定版本的 Release 下载地址")
+    package_audio = commands.add_parser("package-audio", help="从已安装的 0.0.3 有声词包提取录音")
+    package_audio.add_argument("directory", type=Path, help="包含 dictionary.sqlite 的词包目录")
+    package_audio.add_argument("--entry-id", required=True)
+    package_audio.add_argument("--out", type=Path, required=True)
     return root
 
 
@@ -164,6 +193,26 @@ def main() -> None:
     elif args.command == "core-release-verify":
         from .release_v2 import verify_core_release
         result = verify_core_release(args.directory, args.deep)
+    elif args.command == "package-build":
+        from .release_v3 import build_layered_release
+        manifest = build_layered_release(
+            args.base, args.full, args.lock, args.out, args.function_words,
+            args.lite_mb * 1_000_000, args.shard_mib * 1024 * 1024)
+        result = {"schema_version": manifest["schema_version"],
+                  "manifest": str(args.out / "release.json"), "editions": manifest["editions"]}
+    elif args.command == "package-verify":
+        from .release_v3 import verify_layered_release
+        result = verify_layered_release(args.directory, args.edition, args.deep)
+    elif args.command == "package-plan":
+        from .install import plan_upgrade
+        result = plan_upgrade(args.directory, args.cache, args.edition)
+    elif args.command == "package-install":
+        from .install import install_package
+        result = install_package(args.directory, args.cache, args.out, args.edition,
+                                 args.source, args.url)
+    elif args.command == "package-audio":
+        from .install import extract_installed_audio
+        result = extract_installed_audio(args.directory, args.entry_id, args.out)
     elif args.command == "lookup":
         result = {"entries": lookup(args.db, args.word)}
         if args.wordnet:

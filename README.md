@@ -2,14 +2,14 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/brand/logo-dark.png">
-  <img src="assets/brand/logo-light.png" width="360" alt="词遇 LexiMeet 标志">
+  <img src="assets/brand/logo-light.png" width="360" alt="词遇-LexiMeet 标志">
 </picture>
 
 <h1>LexiMeet Dictionary</h1>
 <p><strong>词遇词典 · 为桌面端和浏览器插件准备的离线英汉词包</strong></p>
 <p>
   <a href="https://github.com/leximeet/leximeet-dictionary/actions/workflows/test.yml"><img src="https://github.com/leximeet/leximeet-dictionary/actions/workflows/test.yml/badge.svg?branch=main" alt="Tests"></a>
-  <a href="https://github.com/leximeet/leximeet-dictionary/actions/workflows/core-v0.0.2.yml"><img src="https://github.com/leximeet/leximeet-dictionary/actions/workflows/core-v0.0.2.yml/badge.svg?event=push" alt="0.0.2 Release"></a>
+  <a href="https://github.com/leximeet/leximeet-dictionary/actions/workflows/packages-v0.0.3.yml"><img src="https://github.com/leximeet/leximeet-dictionary/actions/workflows/packages-v0.0.3.yml/badge.svg?event=push" alt="Release"></a>
   <a href="https://github.com/leximeet/leximeet-dictionary/releases"><img src="https://img.shields.io/github/v/release/leximeet/leximeet-dictionary" alt="Latest release"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/leximeet/leximeet-dictionary" alt="Code license"></a>
 </p>
@@ -34,7 +34,17 @@
 
 0.0.2 只发布核心版；完整版仍取自 0.0.1。非核心词尚无随包音频，可以由消费端按需在线朗读。每个版本都以自身 Release 的 `release.json` 为下载和校验入口。
 
-**下一步：[0.0.3 开发路线](docs/ROADMAP.md)。**计划把 `lite / core / full` 与有声／无声组合成共享分片的词包：0.0.3 先交付五种组合，全词离线音频的 `full-audio` 留到 1.0.0。`lite` 精选约 25,000 个核心词并保留入选词的完整词卡；两个 lite 包都以下载资产小于 100 MB 为目标。这些组合目前尚未发布。
+**0.0.3 本地候选已通过构建和校验，正式 Release 待发布。** 新版按词量和音频共享资产，安装时建立本地索引。下表包含清单、来源和许可文件，以十进制 MB 计；正式结果以 Release 的 `release.json` 为准。
+
+| 0.0.3 组合 | 词条 | 下载量 | 离线录音 |
+| --- | ---: | ---: | --- |
+| **lite-text** | 26,417 | **45.84 MB** | 无 |
+| **lite-audio** | 26,417 | **99.95 MB** | 每词都有 |
+| core-text | 117,902 | 96.68 MB | 无 |
+| core-audio | 117,902 | 344.41 MB | 每词都有 |
+| full-text | 811,092 | 141.99 MB | 无 |
+
+lite 先保留 23 个学习目录的全部成员和高频功能词，再按历史词频补入，使两包各自严格小于 100 MB；入选词保留完整词卡。core 包含全部 open-dictionary 词卡。full 的非核心差量分为 11 片；全词有声的 full-audio 留到 1.0.0。安装后还需要索引空间，下载体积不是安装占用。详见[词包与接入](docs/PACKAGES_0.0.3.md)、[可勾选任务清单](docs/TASKS_0.0.3.md)和[开发路线](docs/ROADMAP.md)。
 
 ## 为什么做这份词典
 
@@ -62,11 +72,11 @@ python3 -m leximeet_dictionary release-assemble dist/v0.0.1 --out /tmp/leximeet-
 python3 -m leximeet_dictionary lookup --db /tmp/leximeet-dictionary.sqlite bank
 ```
 
-应用的下载与原子替换步骤见 [0.0.2 核心版协议](docs/CLIENT_CONTRACT_0.0.2.md)和 [0.0.1 完整版协议](docs/CLIENT_CONTRACT.md)；从源码构建见[构建说明](docs/BUILD.md)。仓库提供词包与参考校验器，桌面端和插件端的原生接入由各自项目完成。
+以上命令用于已发布的旧版。0.0.3 使用明确的 `lite-text` 等组合名，支持哈希缓存和按层升级，参考命令见[新版接入](docs/PACKAGES_0.0.3.md)。旧版协议见 [0.0.2 核心版](docs/CLIENT_CONTRACT_0.0.2.md)和 [0.0.1 完整版](docs/CLIENT_CONTRACT.md)；从源码构建见[构建说明](docs/BUILD.md)。仓库提供词包和参考安装器，原生客户端自行实现下载、索引与播放。
 
 ## 自动化检查与发布
 
-推送到 `main` 或向 `main` 提交 PR 会运行单元测试。`v0.0.2` tag 推送已触发[固定来源构建与深检](https://github.com/leximeet/leximeet-dictionary/actions/runs/36540185667)：流水线先创建草稿，核对 GitHub 上每个资产的大小和 SHA-256，全部通过后自动发布。[更新记录](CHANGELOG.md)、[0.0.3 开发路线](docs/ROADMAP.md)和[贡献指南](CONTRIBUTING.md)可查看当前状态与参与方式。
+推送到 `main` 或向 `main` 提交 PR 运行轻量测试。推送 `v0.0.3` tag 自动构建并深检五种组合、验证真实 lite 安装，再创建或补齐草稿；核对 GitHub 上每个资产的大小和 SHA-256 后自动发布。已发布资产不自动覆盖。0.0.3 流水线尚待首次远端运行，本地测试和静态检查已通过；触发方式见[构建说明](docs/BUILD.md)。[更新记录](CHANGELOG.md)和[贡献指南](CONTRIBUTING.md)提供参与入口。
 
 ## 来源与致谢
 

@@ -1,4 +1,4 @@
-"""按 0.0.1 核心词卡与学习索引组装 0.0.2 单词 JSON，不修改旧版资产。"""
+"""组装 v2 学习词卡；兼容既有核心导出，也用于新版非核心词的统一结构。"""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ LEARNING_CARD_SCHEMA = "leximeet.learning-card.v1"
 def compose_entry(entry: dict, learning: dict) -> dict:
     """词卡保留已有字段；新增能力各有独立位置，空数组表示尚无内容。"""
     if entry.get("schema_version") != "leximeet.entry.v1":
-        raise ValueError("仅支持由 leximeet.entry.v1 核心词卡组装")
+        raise ValueError("仅支持由 leximeet.entry.v1 词卡组装")
     if entry["entry_id"] != learning["entry_id"]:
         raise ValueError("学习内容与词卡 entry_id 不一致")
     result = dict(entry)

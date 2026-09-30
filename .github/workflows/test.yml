@@ -17,6 +17,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - name: Install fixed build dependency
+        run: python -m pip install -r requirements.txt
       - name: Compile Python modules
         run: python -m compileall -q leximeet_dictionary
       - name: Run fixture tests

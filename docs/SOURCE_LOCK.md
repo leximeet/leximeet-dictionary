@@ -1,5 +1,9 @@
 # 固定输入
 
+0.0.3 按 [package-sources.lock.json](../package-sources.lock.json) 锁定官方 0.0.2 Release 清单、官方 0.0.1 全量 JSONL、功能词和压缩实现。构建时核对输入文件的大小与 SHA-256，不重新访问浮动上游，也不重新合成核心录音。lite 名单由固定规则和完整下载预算产生；最终选词报告和逐文件摘要见新词包的 `selection.json`、`release.json`。构建与自动发布见[构建说明](BUILD.md)。
+
+## 早期版本的数据底座
+
 构建时以仓库根目录 [sources.lock.json](../sources.lock.json) 的文件大小和 SHA-256 为准，而不是跟随上游默认分支。Git 子模块固定 ECDICT、CMUdict 等源码版本；open-dictionary v2.0 的 `distribution` 与 `audit`、Open English WordNet 2025 ZIP 是另外锁定的实际数据文件。
 
 | 来源 | 0.0.1 固定范围 |
