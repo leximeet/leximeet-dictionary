@@ -14,9 +14,8 @@
   <a href="LICENSE"><img src="https://img.shields.io/github/license/leximeet/leximeet-dictionary" alt="Code license"></a>
 </p>
 <p>
-  <a href="https://github.com/leximeet/leximeet-dictionary/releases/tag/v0.0.2"><strong>下载核心版</strong></a> ·
-  <a href="https://github.com/leximeet/leximeet-dictionary/releases/tag/v0.0.1">下载完整版</a> ·
-  <a href="docs/CLIENT_CONTRACT_0.0.2.md">接入文档</a> ·
+  <a href="https://github.com/leximeet/leximeet-dictionary/releases/tag/v0.0.3"><strong>下载词包</strong></a> ·
+  <a href="docs/PACKAGES_0.0.3.md">接入文档</a> ·
   <a href="docs/WORD_ENTRY_MODEL.md">词条结构</a> ·
   <a href="docs/ROADMAP.md">开发路线</a>
 </p>
@@ -27,16 +26,9 @@
 
 ## 选择词包
 
-| 发布包 | 内容 | 适合场景 |
-| --- | --- | --- |
-| **[v0.0.2 核心版](https://github.com/leximeet/leximeet-dictionary/releases/tag/v0.0.2)** | 117,902 条词卡及逐词离线音频；23 个考试与专业学习目录；84,491 词有助记 | 桌面端、插件端内置与按词书学习 |
-| **[v0.0.1 完整版](https://github.com/leximeet/leximeet-dictionary/releases/tag/v0.0.1)** | 811,092 条词条；分片下载，复用核心词离线音频 | 用户主动下载全部词条 |
+**[0.0.3 已正式发布](https://github.com/leximeet/leximeet-dictionary/releases/tag/v0.0.3)。** 五种组合共享词卡与音频文件，安装时建立本地索引。下表为首次安装所需的下载大小，包含清单、来源和许可文件，以十进制 MB 计（1 MB = 1,000,000 字节）；精确值见 Release 的 `release.json`。
 
-0.0.2 只发布核心版；完整版仍取自 0.0.1。非核心词尚无随包音频，可以由消费端按需在线朗读。每个版本都以自身 Release 的 `release.json` 为下载和校验入口。
-
-**0.0.3 本地候选已通过构建和校验，正式 Release 待发布。** 新版按词量和音频共享资产，安装时建立本地索引。下表包含清单、来源和许可文件，以十进制 MB 计；正式结果以 Release 的 `release.json` 为准。
-
-| 0.0.3 组合 | 词条 | 下载量 | 离线录音 |
+| 0.0.3 组合 | 词条 | 下载大小 | 离线录音 |
 | --- | ---: | ---: | --- |
 | **lite-text** | 26,417 | **45.84 MB** | 无 |
 | **lite-audio** | 26,417 | **99.95 MB** | 每词都有 |
@@ -44,7 +36,9 @@
 | core-audio | 117,902 | 344.41 MB | 每词都有 |
 | full-text | 811,092 | 141.99 MB | 无 |
 
-lite 先保留 23 个学习目录的全部成员和高频功能词，再按历史词频补入，使两包各自严格小于 100 MB；入选词保留完整词卡。core 包含全部 open-dictionary 词卡。full 的非核心差量分为 11 片；全词有声的 full-audio 留到 1.0.0。安装后还需要索引空间，下载体积不是安装占用。详见[词包与接入](docs/PACKAGES_0.0.3.md)、[可勾选任务清单](docs/TASKS_0.0.3.md)和[开发路线](docs/ROADMAP.md)。
+lite 适合端侧内置：先保留 23 个学习目录的全部成员和高频功能词，再按历史词频补入，使两包各自严格小于 100 MB；入选词保留完整词卡。core 包含全部 open-dictionary 词卡，其中 84,491 个核心词已有助记。full 的非核心差量分为 11 片；全词有声的 full-audio 留到 1.0.0。安装后还需要索引空间，**下载大小不等于安装占用**。详见[词包与接入](docs/PACKAGES_0.0.3.md)、[发布任务](docs/TASKS_0.0.3.md)和[开发路线](docs/ROADMAP.md)。
+
+旧版 [0.0.2 核心版](https://github.com/leximeet/leximeet-dictionary/releases/tag/v0.0.2)和 [0.0.1 完整版](https://github.com/leximeet/leximeet-dictionary/releases/tag/v0.0.1)继续保留。旧客户端使用对应版本的固定清单。
 
 ## 为什么做这份词典
 
@@ -54,29 +48,30 @@ lite 先保留 23 个学习目录的全部成员和高频功能词，再按历�
 | 释义与标签 | 逐义解释、领域与用法 | 中文回退、词条级考试标签 | 保留义项与词条各自的作用域，不把补充译文覆盖成主释义 |
 | 学习 | 词卡中的短助记 | 考试标签与历史词频 | 有序词书、专业目录及独立的助记材料 |
 | 发音 | IPA 与在线音频线索 | 旧式音标字段 | IPA/ARPABET 分开记录，核心词逐词离线发音 |
-| 交付 | 上游数据格式 | CSV | JSONL、SQLite、音频分片与逐文件 SHA-256 |
+| 交付 | 上游数据格式 | CSV | 压缩 JSONL、共享分片与逐文件 SHA-256；安装时建索引 |
 
 ECDICT 补词多数没有人工整理的逐义解释，WordNet 概念也尚未与具体义项自动对齐；词遇不会把这些内容伪装成已审校词义。来源和数量见[词典总览](docs/DICTIONARY_OVERVIEW.md)。
 
 ## 接入与使用
 
-消费端从固定版本的 `release.json` 读取 `editions.core.assets` 或 `editions.full.assets`，先按字节数和 SHA-256 校验，再安装词包。0.0.1 完整版的 SQLite 需要按 `sqlite.parts` 拼接；音频按索引中的 `offset`、`bytes` 从 `.pack` 读取。与旧版同名同哈希的核心音频分片可以复用。用户笔记、单词本和自定义标签存于词包之外。
+其他词遇产品直接使用固定版本的 Release，无需把本仓库作为子模块。消费端从 `release.json` 读取 `editions["lite-audio"].assets` 等目标组合，按字节数和 SHA-256 校验，再建立本地索引。升级只下载缺失或哈希不同的文件；用户笔记、单词本和自定义标签存于词包之外。
+
+按[接入文档](docs/PACKAGES_0.0.3.md)安装 Python 依赖后，可用参考安装器下载并安装 lite 带音频版：
 
 ```bash
-# 已下载对应 Release 的全部所需资产后，深度校验发布目录。
-python3 -m leximeet_dictionary core-release-verify dist/v0.0.2 --deep
-python3 -m leximeet_dictionary release-verify dist/v0.0.1 --edition full --deep
-
-# 使用 0.0.1 完整版时，校验分片并拼接查询库。
-python3 -m leximeet_dictionary release-assemble dist/v0.0.1 --out /tmp/leximeet-dictionary.sqlite
-python3 -m leximeet_dictionary lookup --db /tmp/leximeet-dictionary.sqlite bank
+mkdir -p downloads/v0.0.3
+curl -fL https://github.com/leximeet/leximeet-dictionary/releases/download/v0.0.3/release.json \
+  -o downloads/v0.0.3/release.json
+python3 -m leximeet_dictionary package-install downloads/v0.0.3 \
+  --edition lite-audio --cache build/package-cache --out build/dictionary-install \
+  --url https://github.com/leximeet/leximeet-dictionary/releases/download/v0.0.3
 ```
 
-以上命令用于已发布的旧版。0.0.3 使用明确的 `lite-text` 等组合名，支持哈希缓存和按层升级，参考命令见[新版接入](docs/PACKAGES_0.0.3.md)。旧版协议见 [0.0.2 核心版](docs/CLIENT_CONTRACT_0.0.2.md)和 [0.0.1 完整版](docs/CLIENT_CONTRACT.md)；从源码构建见[构建说明](docs/BUILD.md)。仓库提供词包和参考安装器，原生客户端自行实现下载、索引与播放。
+将 `--edition` 改成其他组合即可切换，继续使用同一缓存便可复用文件。原生客户端自行实现下载、索引与播放，不要求浏览器运行 Python。详细协议见[0.0.3 接入](docs/PACKAGES_0.0.3.md)；旧版协议见 [0.0.2 核心版](docs/CLIENT_CONTRACT_0.0.2.md)和 [0.0.1 完整版](docs/CLIENT_CONTRACT.md)，源码构建见[构建说明](docs/BUILD.md)。
 
 ## 自动化检查与发布
 
-推送到 `main` 或向 `main` 提交 PR 运行轻量测试。推送 `v0.0.3` tag 自动构建并深检五种组合、验证真实 lite 安装，再创建或补齐草稿；核对 GitHub 上每个资产的大小和 SHA-256 后自动发布。已发布资产不自动覆盖。0.0.3 流水线尚待首次远端运行，本地测试和静态检查已通过；触发方式见[构建说明](docs/BUILD.md)。[更新记录](CHANGELOG.md)和[贡献指南](CONTRIBUTING.md)提供参与入口。
+推送到 `main` 或向 `main` 提交 PR 运行轻量测试。推送 `v0.0.3` tag 自动构建并深检五种组合、验证真实 lite 安装，再创建或补齐草稿；核对 GitHub 上每个资产的大小和 SHA-256 后自动发布。已发布资产不自动覆盖。0.0.3 的[发版流水线](https://github.com/leximeet/leximeet-dictionary/actions/runs/36660279575)已成功，34 个公开资产已与清单核对。触发方式见[构建说明](docs/BUILD.md)；参与入口见[更新记录](CHANGELOG.md)和[贡献指南](CONTRIBUTING.md)。
 
 ## 来源与致谢
 

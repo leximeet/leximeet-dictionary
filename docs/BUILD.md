@@ -4,6 +4,8 @@
 
 正式发版交给 GitHub Actions。推送到 main 或提交 PR 只运行轻量测试；推送 **v0.0.3 tag** 才自动生成并深检五种词包，验证真实 lite 安装，补齐草稿资产，核对 GitHub 大小和 SHA-256 后自动发布。手动 Run workflow 用于失败后重试，它始终读取固定 tag。工作流见 [packages-v0.0.3.yml](../.github/workflows/packages-v0.0.3.yml)。
 
+v0.0.3 的[发版流水线](https://github.com/leximeet/leximeet-dictionary/actions/runs/36660279575)已成功，[正式 Release](https://github.com/leximeet/leximeet-dictionary/releases/tag/v0.0.3)有 34 个文件，全部大小与 SHA-256 已核对。使用词包可直接下载 Release，不需要在本地全量重建。
+
 本地只需固定的 Python 压缩依赖，不需要重新下载上游源码或合成十万条录音。以下在仓库根目录执行，下载目录和输出目录应使用新的空路径。
 
 ```bash
@@ -24,7 +26,7 @@ python -m leximeet_dictionary package-verify dist/v0.0.3 --deep
 
 构建器检查 [package-sources.lock.json](../package-sources.lock.json) 的输入哈希和压缩实现，实际测量词卡、录音和索引大小；两个 lite 包必须各自严格低于 100 MB。深检逐层检查词卡、目录引用、去重、录音偏移及逐词哈希。本地安装和升级命令见[词包接入](PACKAGES_0.0.3.md)。
 
-发版前完成[任务清单](TASKS_0.0.3.md)，在已验证的提交上创建 tag，再依次推送 main 和 tag。推送 main 本身不会发版。流水线中断后可重跑：草稿只补缺失或错误的资产；正式发布的资产不同则停止，不覆盖既有版本。
+v0.0.3 已发布，不要移动该 tag 或覆盖正式资产。后续版本在已验证的提交上创建新 tag，并配置对应的版本工作流；推送 main 本身不会发版。流水线中断后可重跑：草稿只补缺失或错误的资产；正式发布的资产不同则停止，不覆盖既有版本。
 
 ## 0.0.1：重建早期数据底座
 
